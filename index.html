@@ -395,6 +395,28 @@ function HomePage({ txns, setTxns, wallets, setWallets, subs, settings, setPage,
         </div>
       </div>
 
+      {/* 每月固定訂閱區塊 */}
+      {subs&&subs.filter(s=>s.active).length>0&&datePreset==='all'&&catFilter==='all'&&!search&&(
+        <div style={{marginBottom:20}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+            <div className="section-title" style={{margin:0}}>每月固定訂閱</div>
+            <button style={{background:'none',border:'none',color:'var(--primary)',fontSize:13,cursor:'pointer',fontFamily:'var(--font)',fontWeight:500}} onClick={()=>setPage('subs')}>管理 →</button>
+          </div>
+          <div className="card" style={{overflow:'hidden'}}>
+            {subs.filter(s=>s.active).map((s,i,arr)=>(
+              <div key={s.id} style={{display:'flex',alignItems:'center',padding:'12px 16px',borderBottom:i<arr.length-1?'1px solid rgba(148,163,184,0.07)':'none'}}>
+                <div style={{width:38,height:38,borderRadius:10,background:'rgba(99,102,241,0.15)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,marginRight:12,flexShrink:0}}>{s.icon||s.name.charAt(0)}</div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontWeight:500,fontSize:14}}>{s.name}</div>
+                  <div style={{fontSize:12,color:'var(--text-dim)',marginTop:2}}>每月 {s.billingDay} 號扣款</div>
+                </div>
+                <div style={{fontWeight:600,color:'var(--danger)',fontSize:14,flexShrink:0}}>-{fmtAmt(s.amount,s.currency||'TWD')}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="section-title">{search||catFilter!=='all'||datePreset!=='all'?`篩選結果（${filtered.length} 筆）`:'最近交易'}</div>
 
       {visKeys.length===0 ? (
@@ -762,6 +784,16 @@ function StatsPage({ txns }) {
               <Tooltip {...ttStyle} formatter={(v,n,props)=>[fmtAmt(v),props.payload.label]} />
             </PieChart>
           </ResponsiveContainer>
+          {/* 分類顏色標籤列表 */}
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px 12px',marginTop:14,paddingTop:12,borderTop:'1px solid rgba(148,163,184,0.08)'}}>
+            {catData.map(entry=>(
+              <div key={entry.id} style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',opacity:drillCat&&drillCat!==entry.id?0.4:1,transition:'opacity 0.2s'}} onClick={()=>setDrillCat(prev=>prev===entry.id?null:entry.id)}>
+                <span style={{width:10,height:10,borderRadius:'50%',background:entry.color,flexShrink:0}}/>
+                <span style={{fontSize:12,color:'var(--text-muted)',flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{entry.emoji} {entry.label}</span>
+                <span style={{fontSize:12,fontWeight:600,color:'var(--text)',flexShrink:0}}>{fmtAmt(entry.value)}</span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
