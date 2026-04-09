@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-TW" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -15,13 +15,55 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
   <style>
     :root {
-      --bg: #020617; --card-bg: rgba(15,23,42,0.8); --card-border: 1px solid rgba(148,163,184,0.1);
-      --radius: 16px; --primary: #6366f1; --primary-dark: #4f46e5; --accent: #10b981;
-      --text: #f1f5f9; --text-muted: #94a3b8; --text-dim: #64748b;
-      --danger: #ef4444; --warning: #f59e0b; --nav-h: 72px; --font: 'Inter', sans-serif;
+      /* 淺色模式 (Light Mode) - 增強對比度版本 */
+      --bg: #e2e8f0; /* 稍微加深底色，凸顯純白卡片 */
+      --card-bg: #ffffff;
+      --card-border: 1px solid rgba(0, 0, 0, 0.08);
+      --primary: #b1acb3;
+      --primary-dark: #9f9b9f;
+      --accent: #059669; /* 綠色加深以確保白底清楚 */
+      --text: #020617; /* 極深色，確保高對比 */
+      --text-muted: #334155; /* 加深副標題 */
+      --text-dim: #475569; /* 加深備註文字 */
+      --danger: #dc2626; 
+      --warning: #d97706;
+      --nav-bg: rgba(255, 255, 255, 0.98);
+      --input-bg: #f1f5f9;
+      --cat-card-bg: #f8fafc;
+      --hover-bg: rgba(0, 0, 0, 0.05);
+      --modal-overlay: rgba(0, 0, 0, 0.5); /* 彈窗遮罩加深 */
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* 卡片陰影 */
+      --nav-h: 72px; 
+      --radius: 16px;
+      --font: 'Inter', sans-serif;
     }
+
+    /* 深色模式 (Dark Mode) - 黑底白字增強版 */
+    [data-theme="dark"] {
+      --bg: #3f4247; /* 原53565c微調加深，拉開卡片層次 */
+      --card-bg: rgba(45, 47, 51, 0.9);
+      --card-border: 1px solid rgba(255, 255, 255, 0.08);
+      --primary: #b1acb3;
+      --primary-dark: #9f9b9f;
+      --accent: #10b981;
+      --text: #f8fafc;
+      --text-muted: #cbd5e1;
+      --text-dim: #94a3b8;
+      --danger: #ef4444; 
+      --warning: #f59e0b;
+      --nav-bg: rgba(63, 66, 71, 0.98);
+      --input-bg: rgba(0, 0, 0, 0.3);
+      --cat-card-bg: rgba(0, 0, 0, 0.2);
+      --hover-bg: rgba(255, 255, 255, 0.08);
+      --modal-overlay: rgba(0, 0, 0, 0.75);
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); }
+    html, body { 
+      height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); 
+      transition: background-color 0.4s ease, color 0.4s ease;
+    }
     #root { min-height: 100vh; max-width: 430px; margin: 0 auto; position: relative; }
     @keyframes fadeSlideIn { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:none} }
     @keyframes pulseRed { 0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0.4)} 50%{box-shadow:0 0 0 8px rgba(239,68,68,0)} }
@@ -29,45 +71,65 @@
     @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
     .fade-in { animation: fadeSlideIn 0.4s ease both; }
     ::-webkit-scrollbar{width:4px} ::-webkit-scrollbar-track{background:transparent} ::-webkit-scrollbar-thumb{background:rgba(148,163,184,0.2);border-radius:4px}
-    .card { background:var(--card-bg); border:var(--card-border); border-radius:var(--radius); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); }
+    
+    .card { background:var(--card-bg); border:var(--card-border); border-radius:var(--radius); box-shadow: var(--shadow); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); transition: background-color 0.4s, border-color 0.4s, box-shadow 0.4s; }
     .page { padding:20px 16px calc(var(--nav-h) + 20px); min-height:100vh; animation:fadeSlideIn 0.4s ease both; }
-    .bottom-nav { position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:430px; height:var(--nav-h); background:rgba(15,23,42,0.95); backdrop-filter:blur(20px); border-top:var(--card-border); display:flex; align-items:center; justify-content:space-around; z-index:100; padding:0 4px; }
+    .bottom-nav { position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:430px; height:var(--nav-h); background:var(--nav-bg); backdrop-filter:blur(20px); border-top:var(--card-border); display:flex; align-items:center; justify-content:space-around; z-index:100; padding:0 4px; transition: background-color 0.4s; }
     .nav-item { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; cursor:pointer; padding:6px 4px; border-radius:12px; transition:all 0.2s; flex:1; min-width:0; background:none; border:none; color:var(--text-dim); }
-    .nav-item.active { color:var(--primary); }
+    .nav-item.active { color:var(--text); font-weight: 700; }
     .nav-item .nav-emoji { font-size:20px; line-height:1; }
     .nav-item .nav-label { font-size:10px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .nav-add { width:52px; height:52px; border-radius:50%; background:linear-gradient(135deg,var(--primary),var(--primary-dark)); box-shadow:0 4px 16px rgba(99,102,241,0.5); position:relative; top:-8px; display:flex; align-items:center; justify-content:center; font-size:24px; cursor:pointer; border:none; color:white; flex-shrink:0; transition:transform 0.2s,box-shadow 0.2s; }
-    .nav-add:hover { transform:translateY(-10px); box-shadow:0 6px 20px rgba(99,102,241,0.6); }
+    
+    /* 中間的大加號按鈕：強制黑字保持高對比 */
+    .nav-add { width:52px; height:52px; border-radius:50%; background:linear-gradient(135deg,var(--primary),var(--primary-dark)); box-shadow:0 4px 12px rgba(177,172,179,0.5); position:relative; top:-8px; display:flex; align-items:center; justify-content:center; font-size:24px; cursor:pointer; border:none; color:#020617; flex-shrink:0; transition:transform 0.2s,box-shadow 0.2s; }
+    .nav-add:hover { transform:translateY(-10px); box-shadow:0 6px 16px rgba(177,172,179,0.7); }
     @media (max-width:400px) { .nav-label{display:none} }
-    input, textarea, select { width:100%; background:rgba(30,41,59,0.8); border:1px solid rgba(148,163,184,0.15); border-radius:12px; padding:12px 14px; color:var(--text); font-family:var(--font); font-size:15px; outline:none; transition:border-color 0.2s; }
+    
+    input, textarea, select { width:100%; background:var(--input-bg); border:1px solid rgba(148,163,184,0.15); border-radius:12px; padding:12px 14px; color:var(--text); font-family:var(--font); font-size:15px; outline:none; transition:border-color 0.2s, background-color 0.4s, color 0.4s; }
     input:focus, textarea:focus, select:focus { border-color:var(--primary); }
-    select option { background:#1e293b; }
+    select option { background:var(--card-bg); color:var(--text); }
+    
     .btn { border:none; border-radius:12px; padding:13px 20px; font-family:var(--font); font-size:15px; font-weight:600; cursor:pointer; transition:all 0.2s; display:inline-flex; align-items:center; justify-content:center; gap:8px; }
     .btn:disabled { opacity:0.5; cursor:not-allowed; }
-    .btn-primary { background:linear-gradient(135deg,var(--primary),var(--primary-dark)); color:white; }
-    .btn-primary:not(:disabled):hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(99,102,241,0.4); }
-    .btn-success { background:linear-gradient(135deg,#10b981,#059669); color:white; }
-    .btn-success:not(:disabled):hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(16,185,129,0.4); }
-    .btn-ghost { background:rgba(148,163,184,0.08); color:var(--text-muted); }
+    
+    /* 主要按鈕：強制深色字體，加上陰影立體感 */
+    .btn-primary { background:linear-gradient(135deg,var(--primary),var(--primary-dark)); color:#020617 !important; font-weight:700; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .btn-primary:not(:disabled):hover { transform:translateY(-1px); box-shadow:0 4px 12px rgba(177,172,179,0.5); }
+    
+    .btn-success { background:linear-gradient(135deg,var(--accent),#059669); color:white; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .btn-success:not(:disabled):hover { transform:translateY(-1px); box-shadow:0 4px 12px rgba(16,185,129,0.4); }
+    
+    .btn-ghost { background:rgba(148,163,184,0.15); color:var(--text-muted); }
     .btn-danger { background:rgba(239,68,68,0.15); color:var(--danger); border:1px solid rgba(239,68,68,0.3); }
-    .progress-bar { height:8px; border-radius:4px; background:rgba(148,163,184,0.1); overflow:visible; position:relative; }
+    
+    .progress-bar { height:8px; border-radius:4px; background:rgba(148,163,184,0.2); overflow:visible; position:relative; }
     .progress-fill { height:100%; border-radius:4px; transition:width 0.5s ease; }
     .progress-mark { position:absolute; top:-4px; width:2px; height:16px; background:var(--warning); border-radius:1px; }
     .badge { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:20px; font-size:12px; font-weight:500; }
-    .spinner { width:20px; height:20px; border:2px solid rgba(255,255,255,0.2); border-top-color:white; border-radius:50%; animation:spin 0.7s linear infinite; }
-    .gradient-text { background:linear-gradient(90deg,#a5b4fc,#67e8f9); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .spinner { width:20px; height:20px; border:2px solid rgba(255,255,255,0.2); border-top-color:#020617; border-radius:50%; animation:spin 0.7s linear infinite; }
+    
+    /* 漸層文字自動適應主題 */
+    .gradient-text { background:linear-gradient(90deg,#4338ca,#0284c7); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    [data-theme="dark"] .gradient-text { background:linear-gradient(90deg,#a5b4fc,#67e8f9); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    
     .warn-banner { background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); border-radius:12px; padding:12px 16px; display:flex; align-items:center; gap:10px; animation:pulseRed 2s infinite; }
-    .info-banner { background:rgba(99,102,241,0.12); border:1px solid rgba(99,102,241,0.3); border-radius:12px; padding:12px 16px; display:flex; align-items:flex-start; gap:10px; }
-    .section-title { font-size:13px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:12px; }
+    .info-banner { background:rgba(177,172,179,0.15); border:1px solid rgba(177,172,179,0.4); border-radius:12px; padding:12px 16px; display:flex; align-items:flex-start; gap:10px; }
+    .section-title { font-size:13px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:12px; }
+    
     .filter-chips { display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; scrollbar-width:none; }
     .filter-chips::-webkit-scrollbar { display:none; }
-    .chip { border:none; border-radius:20px; padding:6px 14px; font-family:var(--font); font-size:13px; font-weight:500; cursor:pointer; white-space:nowrap; transition:all 0.2s; background:rgba(148,163,184,0.08); color:var(--text-muted); }
-    .chip.active { background:rgba(99,102,241,0.25); color:#a5b4fc; border:1px solid rgba(99,102,241,0.4); }
-    .chip.income-active { background:rgba(16,185,129,0.2); color:#6ee7b7; border:1px solid rgba(16,185,129,0.4); }
-    .type-toggle { display:flex; gap:8px; margin-bottom:16px; background:rgba(30,41,59,0.5); border-radius:12px; padding:4px; }
+    .chip { border:none; border-radius:20px; padding:6px 14px; font-family:var(--font); font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; transition:all 0.2s; background:var(--input-bg); color:var(--text-muted); }
+    
+    /* Filter Chip 選取狀態強制高對比 */
+    .chip.active { background:var(--primary); color:#020617; border:none; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+    
+    .chip.income-active { background:var(--accent); color:#ffffff; border:none; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+    
+    .type-toggle { display:flex; gap:8px; margin-bottom:16px; background:var(--input-bg); border-radius:12px; padding:4px; transition: background-color 0.4s; }
     .type-btn { flex:1; padding:10px; border-radius:10px; border:none; font-family:var(--font); font-size:14px; font-weight:600; cursor:pointer; transition:all 0.2s; background:transparent; color:var(--text-muted); }
-    .type-btn.expense.active { background:rgba(239,68,68,0.2); color:#fca5a5; }
-    .type-btn.income.active  { background:rgba(16,185,129,0.2); color:#6ee7b7; }
+    .type-btn.expense.active { background:rgba(239,68,68,0.15); color:var(--danger); }
+    .type-btn.income.active  { background:rgba(16,185,129,0.15); color:var(--accent); }
+    
     /* Markdown */
     .md-content { font-size:14px; line-height:1.75; color:var(--text-muted); }
     .md-content h2 { font-size:16px; font-weight:700; color:var(--text); margin:16px 0 8px; }
@@ -76,20 +138,22 @@
     .md-content p  { margin:4px 0; }
     .md-content ul { padding-left:18px; margin:6px 0; }
     .md-content li { margin:3px 0; }
-    .md-content strong { color:var(--text); font-weight:600; }
-    .md-content em    { color:#a5b4fc; font-style:italic; }
+    .md-content strong { color:var(--text); font-weight:700; }
+    .md-content em    { color:var(--accent); font-style:italic; }
     .md-content hr    { border:none; border-top:1px solid rgba(148,163,184,0.15); margin:12px 0; }
-    /* Chat */
-    .chat-bubble-user { background:linear-gradient(135deg,var(--primary),var(--primary-dark)); color:white; border-radius:18px 18px 4px 18px; padding:10px 14px; max-width:82%; font-size:14px; line-height:1.5; align-self:flex-end; }
-    .chat-bubble-ai   { background:rgba(30,41,59,0.9); border:var(--card-border); color:var(--text); border-radius:18px 18px 18px 4px; padding:10px 14px; max-width:88%; font-size:14px; line-height:1.5; align-self:flex-start; }
+    
+    /* Chat：對話泡泡強制黑字 */
+    .chat-bubble-user { background:linear-gradient(135deg,var(--primary),var(--primary-dark)); color:#020617 !important; font-weight:500; border-radius:18px 18px 4px 18px; padding:10px 14px; max-width:82%; font-size:14px; line-height:1.5; align-self:flex-end; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+    .chat-bubble-ai   { background:var(--card-bg); border:var(--card-border); color:var(--text); border-radius:18px 18px 18px 4px; padding:10px 14px; max-width:88%; font-size:14px; line-height:1.5; align-self:flex-start; transition: background-color 0.4s, color 0.4s; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
     .chat-ts { font-size:10px; color:var(--text-dim); margin-top:4px; }
+    
     /* Quick record category grid */
     .cat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:16px; }
-    .cat-card { background:rgba(30,41,59,0.6); border:2px solid transparent; border-radius:14px; padding:12px 6px; display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer; transition:all 0.2s; }
-    .cat-card:hover, .cat-card.selected { border-color:var(--primary); background:rgba(99,102,241,0.15); }
-    .cat-card.income-selected { border-color:#10b981; background:rgba(16,185,129,0.15); }
+    .cat-card { background:var(--cat-card-bg); border:2px solid transparent; border-radius:14px; padding:12px 6px; display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer; transition:all 0.2s; }
+    .cat-card:hover, .cat-card.selected { border-color:var(--primary-dark); background:rgba(177,172,179,0.2); }
+    .cat-card.income-selected { border-color:var(--accent); background:rgba(16,185,129,0.15); }
     .cat-card-emoji { font-size:24px; }
-    .cat-card-label { font-size:11px; font-weight:500; color:var(--text-muted); }
+    .cat-card-label { font-size:12px; font-weight:600; color:var(--text-muted); }
   </style>
 </head>
 <body>
@@ -113,23 +177,34 @@ const INCOME_CATS = [
   { id:'gift',      label:'禮金',   emoji:'🎁', color:'#f59e0b' },
   { id:'other_in',  label:'其他',   emoji:'💰', color:'#64748b' },
 ];
-// backward compat alias
 const CATS = EXPENSE_CATS;
 const ALL_CATS = [...EXPENSE_CATS, ...INCOME_CATS];
 const CAT_MAP = Object.fromEntries(ALL_CATS.map(c => [c.id, c]));
 
-// [修正7] 動態匯率（預先嘗試讀快取）
-let RATES = { TWD:1, USD:32.5, JPY:0.22, EUR:35.2, HKD:4.15 };
-try {
-  const _c = JSON.parse(localStorage.getItem('fw_rates') || '{}');
-  if (_c.ts && Date.now() - _c.ts < 86400000 && _c.rates) Object.assign(RATES, _c.rates);
-} catch {}
-
 const DEFAULT_WALLETS = [
-  { id:'w1', name:'現金',   icon:'💵', currency:'TWD', balance:3000  },
-  { id:'w2', name:'銀行卡', icon:'🏦', currency:'TWD', balance:28000 },
+  { id:'w1', name:'現金',   icon:'💵', balance:3000  },
+  { id:'w2', name:'銀行卡', icon:'🏦', balance:28000 },
 ];
-const DEFAULT_SETTINGS = { geminiKey:'', budget:30000, currency:'TWD' };
+const DEFAULT_SETTINGS = { geminiKey:'', budget:30000, theme:'light' };
+
+// ─── 共用元件：客製化彈出視窗 ─────────────────────────────────
+function CustomModal({ isOpen, title, text, textRed, onOk, onCancel }) {
+  if (!isOpen) return null;
+  return (
+    <div style={{position:'fixed',inset:0,background:'var(--modal-overlay)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',transition:'background-color 0.4s'}} onClick={onCancel}>
+      <div className="card fade-in" style={{width:'85%',maxWidth:320,padding:24}} onClick={e=>e.stopPropagation()}>
+        <h3 style={{fontSize:18,fontWeight:700,marginBottom:12}}>{title}</h3>
+        <div style={{fontSize:14,lineHeight:1.5,marginBottom:24,color:textRed?'var(--danger)':'var(--text-muted)'}}>
+          {text}
+        </div>
+        <div style={{display:'flex',gap:12}}>
+          <button className="btn btn-danger" style={{flex:1,padding:'10px 0'}} onClick={onCancel}>取消</button>
+          <button className="btn btn-success" style={{flex:1,padding:'10px 0'}} onClick={onOk}>確定</button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ─── localStorage Hook ───────────────────────────────────────
 function useLS(key, initial) {
@@ -150,21 +225,18 @@ function useLS(key, initial) {
 // ─── 輔助函式 ─────────────────────────────────────────────────
 const isExpense = t => !t.type || t.type === 'expense';
 const isIncome  = t => t.type === 'income';
-function toTWD(amount, currency) { return amount * (RATES[currency] || 1); }
-function fmtAmt(amount, currency = 'TWD') {
-  const sym = { TWD:'NT$', USD:'$', JPY:'¥', EUR:'€', HKD:'HK$' };
-  return `${sym[currency]||''}${Number(amount).toLocaleString('zh-TW',{minimumFractionDigits:0,maximumFractionDigits:0})}`;
+function fmtAmt(amount) {
+  return `NT$${Number(amount).toLocaleString('zh-TW',{minimumFractionDigits:0,maximumFractionDigits:0})}`;
 }
 function genId()    { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 function todayStr() { return new Date().toISOString().slice(0,10); }
-function getMonthSubs(subs) { return subs.filter(s=>s.active).reduce((s,x)=>s+toTWD(x.amount,x.currency||'TWD'),0); }
 
 function getWeeklyData(txns) {
-  const weeks = [[0,0],[0,0],[0,0],[0,0]]; // [expense, income]
+  const weeks = [[0,0],[0,0],[0,0],[0,0]]; 
   const now = new Date(), ms = new Date(now.getFullYear(), now.getMonth(), 1);
   txns.filter(t=>{ const d=new Date(t.date); return d>=ms&&d<=now; }).forEach(t=>{
     const w = Math.min(Math.floor((new Date(t.date).getDate()-1)/7),3);
-    const v = toTWD(t.amount, t.currency||'TWD');
+    const v = t.amount;
     if (isExpense(t)) weeks[w][0] += v; else weeks[w][1] += v;
   });
   let cum = 0;
@@ -172,7 +244,7 @@ function getWeeklyData(txns) {
 }
 function getCatBreakdown(txns) {
   const map = {};
-  txns.filter(isExpense).forEach(t=>{ const k=t.category||'other'; map[k]=(map[k]||0)+toTWD(t.amount,t.currency||'TWD'); });
+  txns.filter(isExpense).forEach(t=>{ const k=t.category||'other'; map[k]=(map[k]||0)+t.amount; });
   return Object.entries(map).map(([id,value])=>({ id, value:Math.round(value), ...(CAT_MAP[id]||CAT_MAP.other) })).sort((a,b)=>b.value-a.value);
 }
 
@@ -261,13 +333,13 @@ function TxnActionSheet({ txn, onEdit, onDelete, onClose }) {
   const cat = CAT_MAP[txn.category] || CAT_MAP.other;
   const inc = isIncome(txn);
   return (
-    <div style={{position:'fixed',inset:0,background:'rgba(2,6,23,0.85)',zIndex:300,display:'flex',alignItems:'flex-end',justifyContent:'center'}} onClick={onClose}>
+    <div style={{position:'fixed',inset:0,background:'var(--modal-overlay)',zIndex:300,display:'flex',alignItems:'flex-end',justifyContent:'center',transition:'background-color 0.4s'}} onClick={onClose}>
       <div className="card" style={{width:'100%',maxWidth:430,padding:24,borderRadius:'20px 20px 0 0',animation:'fadeSlideIn 0.25s ease both'}} onClick={e=>e.stopPropagation()}>
         <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:20}}>
           <div style={{width:42,height:42,borderRadius:12,background:cat.color+'33',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20}}>{cat.emoji}</div>
           <div>
             <div style={{fontWeight:600}}>{cat.label}{txn.note?` · ${txn.note}`:''}</div>
-            <div style={{fontSize:13,color:'var(--text-dim)'}}>{txn.date} · <span style={{color:inc?'var(--accent)':'var(--danger)'}}>{inc?'+':'-'}{fmtAmt(txn.amount,txn.currency||'TWD')}</span></div>
+            <div style={{fontSize:13,color:'var(--text-dim)'}}>{txn.date} · <span style={{color:inc?'var(--accent)':'var(--danger)'}}>{inc?'+':'-'}{fmtAmt(txn.amount)}</span></div>
           </div>
         </div>
         <div style={{display:'flex',gap:10}}>
@@ -281,15 +353,18 @@ function TxnActionSheet({ txn, onEdit, onDelete, onClose }) {
 }
 
 // ─── 首頁 ────────────────────────────────────────────────────
-function HomePage({ txns, setTxns, wallets, setWallets, subs, settings, setPage, setEditTxn }) {
+function HomePage({ txns, setTxns, wallets, setWallets, subs, setSubs, settings, setPage, setEditTxn }) {
   const [search,    setSearch]    = React.useState('');
   const [catFilter, setCatFilter] = React.useState('all');
   const [datePreset,setDatePreset]= React.useState('all');
   const [showGroups,setShowGroups]= React.useState(3);
   const [selectedTxn,setSelectedTxn] = React.useState(null);
+  
+  // 刪除確認的 State
+  const [delTxn, setDelTxn] = React.useState(null);
 
-  const pocketBalance = wallets.reduce((s,w)=>s+toTWD(w.balance,w.currency),0);
-  const activeSub     = getMonthSubs(subs);
+  const pocketBalance = wallets.reduce((s,w)=>s+w.balance,0);
+  const activeSub     = subs.filter(s=>s.active).reduce((s,x)=>s+x.amount,0);
   const disposable    = pocketBalance - activeSub;
   const budget        = settings.budget || 30000;
   const now = new Date();
@@ -297,12 +372,14 @@ function HomePage({ txns, setTxns, wallets, setWallets, subs, settings, setPage,
 
   // 本月支出 & 收入
   const monthTxns = txns.filter(t=>{ const d=new Date(t.date); return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear(); });
-  const spent  = monthTxns.filter(isExpense).reduce((s,t)=>s+toTWD(t.amount,t.currency||'TWD'),0);
-  const earned = monthTxns.filter(isIncome).reduce((s,t) =>s+toTWD(t.amount,t.currency||'TWD'),0);
-  const pct    = Math.min((spent/budget)*100,100);
+  const spent  = monthTxns.filter(isExpense).reduce((s,t)=>s+t.amount,0);
+  const earned = monthTxns.filter(isIncome).reduce((s,t) =>s+t.amount,0);
   const over   = spent > budget;
 
-  // [修正5] 月底預估
+  // 剩餘進度百分比
+  const pct    = Math.max(((budget - spent) / budget) * 100, 0);
+
+  // 月底預估
   const daysInMonth = new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
   const dayOfMonth  = now.getDate();
   const projected   = dayOfMonth > 0 ? Math.round((spent/dayOfMonth)*daysInMonth) : 0;
@@ -325,10 +402,18 @@ function HomePage({ txns, setTxns, wallets, setWallets, subs, settings, setPage,
   const visKeys  = datePreset!=='all' ? allKeys : allKeys.slice(0,showGroups);
   const hasMore  = datePreset==='all' && allKeys.length > showGroups;
 
-  const deleteTxn = t => {
+  const handleDeleteConfirm = () => {
+    if(!delTxn) return;
+    const t = delTxn;
+    // 移除交易
     setTxns(prev=>prev.filter(x=>x.id!==t.id));
+    // 扣回錢包餘額
     setWallets(prev=>prev.map(w=>w.id===t.walletId ? {...w, balance: isIncome(t) ? w.balance-t.amount : w.balance+t.amount } : w));
-    setSelectedTxn(null);
+    // 如果這是一筆關聯到訂閱的系統交易，連同訂閱一起移除
+    if (t.subId) {
+      setSubs(prev=>prev.filter(s=>s.id!==t.subId));
+    }
+    setDelTxn(null);
   };
 
   const DATE_PRESETS = [
@@ -347,7 +432,7 @@ function HomePage({ txns, setTxns, wallets, setWallets, subs, settings, setPage,
         </div>
         <div style={{textAlign:'right',fontSize:12,color:'var(--text-dim)',marginTop:20}}>
           <div>錢包 {fmtAmt(pocketBalance)}</div>
-          <div style={{color:'var(--danger)'}}>訂閱 -{fmtAmt(activeSub)}</div>
+          <div style={{color:'var(--danger)'}}>預估訂閱 -{fmtAmt(activeSub)}</div>
           {earned>0 && <div style={{color:'var(--accent)'}}>本月收入 +{fmtAmt(earned)}</div>}
         </div>
       </div>
@@ -357,14 +442,14 @@ function HomePage({ txns, setTxns, wallets, setWallets, subs, settings, setPage,
       {/* 預算條 */}
       <div className="card" style={{padding:16,marginBottom:12}}>
         <div style={{display:'flex',justifyContent:'space-between',fontSize:13,marginBottom:8}}>
-          <span style={{color:'var(--text-muted)'}}>本月預算進度</span>
-          <span style={{color:over?'var(--danger)':'var(--text-muted)'}}>{fmtAmt(spent)} / {fmtAmt(budget)}</span>
+          <span style={{color:'var(--text-muted)'}}>本月預算餘額</span>
+          <span style={{color:over?'var(--danger)':'var(--text-muted)', fontWeight:600}}>{fmtAmt(Math.max(budget - spent, 0))} / {fmtAmt(budget)}</span>
         </div>
         <div className="progress-bar">
-          <div className="progress-fill" style={{width:`${pct}%`,background:over?'var(--danger)':pct>80?'var(--warning)':'var(--accent)'}} />
-          <div className="progress-mark" style={{left:'80%'}} />
+          <div className="progress-fill" style={{width:`${pct}%`,background:over?'var(--danger)':pct<20?'var(--warning)':'var(--accent)'}} />
+          <div className="progress-mark" style={{left:'20%'}} />
         </div>
-        {/* [修正5] 月底預估 */}
+        {/* 月底預估 */}
         {willOver && (
           <div style={{marginTop:10,fontSize:12,color:'var(--warning)',display:'flex',alignItems:'center',gap:6}}>
             <span>📈</span>
@@ -387,35 +472,12 @@ function HomePage({ txns, setTxns, wallets, setWallets, subs, settings, setPage,
           <button className={`chip${catFilter==='all'?' active':''}`} onClick={()=>{setCatFilter('all');setShowGroups(3);}}>全部</button>
           {ALL_CATS.map(c=>(
             <button key={c.id} className={`chip${catFilter===c.id?isIncome({category:c.id,type:INCOME_CATS.find(x=>x.id===c.id)?'income':'expense'})?'income-active':' active':''}`}
-              style={catFilter===c.id&&INCOME_CATS.find(x=>x.id===c.id)?{background:'rgba(16,185,129,0.2)',color:'#6ee7b7',border:'1px solid rgba(16,185,129,0.4)'}:{}}
               onClick={()=>{setCatFilter(c.id);setShowGroups(3);}}>
               {c.emoji} {c.label}
             </button>
           ))}
         </div>
       </div>
-
-      {/* 每月固定訂閱區塊 */}
-      {subs&&subs.filter(s=>s.active).length>0&&datePreset==='all'&&catFilter==='all'&&!search&&(
-        <div style={{marginBottom:20}}>
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
-            <div className="section-title" style={{margin:0}}>每月固定訂閱</div>
-            <button style={{background:'none',border:'none',color:'var(--primary)',fontSize:13,cursor:'pointer',fontFamily:'var(--font)',fontWeight:500}} onClick={()=>setPage('subs')}>管理 →</button>
-          </div>
-          <div className="card" style={{overflow:'hidden'}}>
-            {subs.filter(s=>s.active).map((s,i,arr)=>(
-              <div key={s.id} style={{display:'flex',alignItems:'center',padding:'12px 16px',borderBottom:i<arr.length-1?'1px solid rgba(148,163,184,0.07)':'none'}}>
-                <div style={{width:38,height:38,borderRadius:10,background:'rgba(99,102,241,0.15)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,marginRight:12,flexShrink:0}}>{s.icon||s.name.charAt(0)}</div>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontWeight:500,fontSize:14}}>{s.name}</div>
-                  <div style={{fontSize:12,color:'var(--text-dim)',marginTop:2}}>每月 {s.billingDay} 號扣款</div>
-                </div>
-                <div style={{fontWeight:600,color:'var(--danger)',fontSize:14,flexShrink:0}}>-{fmtAmt(s.amount,s.currency||'TWD')}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       <div className="section-title">{search||catFilter!=='all'||datePreset!=='all'?`篩選結果（${filtered.length} 筆）`:'最近交易'}</div>
 
@@ -428,7 +490,7 @@ function HomePage({ txns, setTxns, wallets, setWallets, subs, settings, setPage,
       ) : <>
         {visKeys.map(date=>(
           <div key={date} style={{marginBottom:20}}>
-            <div style={{fontSize:13,color:'var(--text-dim)',marginBottom:8,fontWeight:500}}>{date.replace(/-/g,'/')}</div>
+            <div style={{fontSize:13,color:'var(--text-dim)',marginBottom:8,fontWeight:600}}>{date.replace(/-/g,'/')}</div>
             <div className="card" style={{overflow:'hidden'}}>
               {grouped[date].map((t,i)=>{
                 const cat=CAT_MAP[t.category]||CAT_MAP.other;
@@ -436,14 +498,14 @@ function HomePage({ txns, setTxns, wallets, setWallets, subs, settings, setPage,
                 return (
                   <div key={t.id} onClick={()=>setSelectedTxn(t)}
                     style={{display:'flex',alignItems:'center',padding:'13px 16px',borderBottom:i<grouped[date].length-1?'1px solid rgba(148,163,184,0.07)':'none',cursor:'pointer',transition:'background 0.15s'}}
-                    onMouseEnter={e=>e.currentTarget.style.background='rgba(148,163,184,0.04)'}
+                    onMouseEnter={e=>e.currentTarget.style.background='var(--hover-bg)'}
                     onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
                     <div style={{width:38,height:38,borderRadius:10,background:cat.color+'33',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,marginRight:12,flexShrink:0}}>{cat.emoji}</div>
                     <div style={{flex:1,minWidth:0,display:'flex',flexDirection:'column',justifyContent:'center'}}>
-                      <div style={{fontWeight:500,fontSize:14}}>{cat.label}</div>
+                      <div style={{fontWeight:600,fontSize:14}}>{cat.label}</div>
                       {t.note&&<div style={{fontSize:12,color:'var(--text-dim)',marginTop:2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{t.note}</div>}
                     </div>
-                    <div style={{fontWeight:600,color:inc?'var(--accent)':'var(--danger)',fontSize:15,marginLeft:8}}>{inc?'+':'-'}{fmtAmt(t.amount,t.currency||'TWD')}</div>
+                    <div style={{fontWeight:700,color:inc?'var(--accent)':'var(--text)',fontSize:15,marginLeft:8}}>{inc?'+':'-'}{fmtAmt(t.amount)}</div>
                     <span style={{marginLeft:8,fontSize:16,color:'var(--text-dim)'}}>›</span>
                   </div>
                 );
@@ -454,7 +516,21 @@ function HomePage({ txns, setTxns, wallets, setWallets, subs, settings, setPage,
         {hasMore && <button className="btn btn-ghost" style={{width:'100%',marginBottom:16}} onClick={()=>setShowGroups(n=>n+3)}>顯示更多（{allKeys.length-showGroups} 天）</button>}
       </>}
 
-      <TxnActionSheet txn={selectedTxn} onEdit={()=>{setSelectedTxn(null);setEditTxn(selectedTxn);setPage('add');}} onDelete={()=>deleteTxn(selectedTxn)} onClose={()=>setSelectedTxn(null)} />
+      <TxnActionSheet 
+        txn={selectedTxn} 
+        onEdit={()=>{setSelectedTxn(null);setEditTxn(selectedTxn);setPage('add');}} 
+        onDelete={()=>{ setDelTxn(selectedTxn); setSelectedTxn(null); }} 
+        onClose={()=>setSelectedTxn(null)} 
+      />
+
+      <CustomModal 
+        isOpen={!!delTxn}
+        title="刪除交易"
+        text={delTxn?.subId ? "移除這筆消費也會同時移除訂閱管理下的同項目" : "確定要刪除這筆交易嗎？"}
+        textRed={!!delTxn?.subId}
+        onOk={handleDeleteConfirm}
+        onCancel={()=>setDelTxn(null)}
+      />
     </div>
   );
 }
@@ -483,24 +559,20 @@ function AddPage({ wallets, settings, setTxns, setWallets, setPage, editTxn, set
   const cancel = () => { setEditTxn && setEditTxn(null); setPage('home'); };
 
   const applyWalletDelta = (wid, amt, type, sign) => {
-    // sign: +1 = add to wallet, -1 = subtract from wallet
     const delta = type==='income' ? amt * sign : amt * -sign;
     setWallets(prev=>prev.map(w=>w.id===wid ? {...w, balance:w.balance+delta} : w));
   };
 
   const submit = () => {
     if (!amount || !walletId) return;
-    const wallet = wallets.find(w=>w.id===walletId);
     const newAmt = parseFloat(amount);
     if (isEdit) {
-      // reverse old
       applyWalletDelta(editTxn.walletId, editTxn.amount, editTxn.type||'expense', -1);
-      // apply new
       applyWalletDelta(walletId, newAmt, txnType, +1);
-      setTxns(prev=>prev.map(t=>t.id===editTxn.id ? {...t,amount:newAmt,category:cat,walletId,note:note.trim(),date,currency:wallet?.currency||'TWD',type:txnType} : t));
+      setTxns(prev=>prev.map(t=>t.id===editTxn.id ? {...t,amount:newAmt,category:cat,walletId,note:note.trim(),date,type:txnType} : t));
       setEditTxn && setEditTxn(null);
     } else {
-      const txn={id:genId(),amount:newAmt,category:cat,walletId,note:note.trim(),date,currency:wallet?.currency||'TWD',type:txnType};
+      const txn={id:genId(),amount:newAmt,category:cat,walletId,note:note.trim(),date,type:txnType};
       setTxns(prev=>[txn,...prev]);
       applyWalletDelta(walletId, newAmt, txnType, +1);
     }
@@ -509,9 +581,8 @@ function AddPage({ wallets, settings, setTxns, setWallets, setPage, editTxn, set
 
   const submitQuick = () => {
     if (!quickAmt || !quickCat || !walletId) return;
-    const wallet = wallets.find(w=>w.id===walletId);
     const amt = parseFloat(quickAmt);
-    const txn={id:genId(),amount:amt,category:quickCat,walletId,note:quickNote.trim(),date:todayStr(),currency:wallet?.currency||'TWD',type:txnType};
+    const txn={id:genId(),amount:amt,category:quickCat,walletId,note:quickNote.trim(),date:todayStr(),type:txnType};
     setTxns(prev=>[txn,...prev]);
     applyWalletDelta(walletId, amt, txnType, +1);
     setPage('home');
@@ -562,9 +633,9 @@ function AddPage({ wallets, settings, setTxns, setWallets, setPage, editTxn, set
 
       {/* 模式切換 */}
       {!isEdit && (
-        <div style={{display:'flex',gap:8,marginBottom:20,background:'rgba(30,41,59,0.5)',borderRadius:12,padding:4}}>
+        <div style={{display:'flex',gap:8,marginBottom:20,background:'var(--input-bg)',borderRadius:12,padding:4}}>
           {[['manual','✏️ 手動'],['ai','✨ AI'],['quick','⚡ 快速']].map(([m,l])=>(
-            <button key={m} className="btn" onClick={()=>setMode(m)} style={{flex:1,padding:'9px',fontSize:13,background:mode===m?'var(--primary)':'transparent',color:mode===m?'white':'var(--text-muted)'}}>{l}</button>
+            <button key={m} className="btn" onClick={()=>setMode(m)} style={{flex:1,padding:'9px',fontSize:13,background:mode===m?'var(--primary)':'transparent',color:mode===m?'#020617':'var(--text-muted)',boxShadow:mode===m?'0 2px 8px rgba(0,0,0,0.1)':'none'}}>{l}</button>
           ))}
         </div>
       )}
@@ -620,7 +691,7 @@ function AddPage({ wallets, settings, setTxns, setWallets, setPage, editTxn, set
               </select></div>
             <div><label style={{fontSize:13,color:'var(--text-muted)',display:'block',marginBottom:6}}>錢包 *</label>
               <select value={walletId} onChange={e=>setWId(e.target.value)}>
-                {wallets.map(w=><option key={w.id} value={w.id}>{w.icon} {w.name} ({fmtAmt(w.balance,w.currency)})</option>)}
+                {wallets.map(w=><option key={w.id} value={w.id}>{w.icon} {w.name} ({fmtAmt(w.balance)})</option>)}
               </select></div>
             <div><label style={{fontSize:13,color:'var(--text-muted)',display:'block',marginBottom:6}}>日期</label>
               <input type="date" value={date} onChange={e=>setDate(e.target.value)} /></div>
@@ -642,12 +713,18 @@ function SettingsPage({ settings, setSettings }) {
   const [budget, setBudget] = React.useState(String(settings.budget||30000));
   const [saved,  setSaved]  = React.useState(false);
   const [confirmReset,setConfirmReset] = React.useState(false);
-  const [rateInfo, setRateInfo] = React.useState('');
 
   const save = () => {
     setSettings({...settings,geminiKey:key.trim(),budget:parseFloat(budget)||30000});
     setSaved(true); setTimeout(()=>setSaved(false),2000);
   };
+  
+  const toggleTheme = () => {
+    const newTheme = settings.theme === 'dark' ? 'light' : 'dark';
+    setSettings({...settings, theme: newTheme});
+    document.documentElement.setAttribute('data-theme', newTheme);
+  };
+  
   const exportData = () => {
     const data = { fw_transactions:JSON.parse(localStorage.getItem('fw_transactions')||'[]'), fw_wallets:JSON.parse(localStorage.getItem('fw_wallets')||'[]'), fw_subscriptions:JSON.parse(localStorage.getItem('fw_subscriptions')||'[]'), fw_settings:JSON.parse(localStorage.getItem('fw_settings')||'{}') };
     const url = URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
@@ -668,56 +745,50 @@ function SettingsPage({ settings, setSettings }) {
   };
   const resetAll = () => { ['fw_transactions','fw_wallets','fw_subscriptions','fw_settings'].forEach(k=>localStorage.removeItem(k)); window.location.reload(); };
 
-  // [修正7] 手動刷新匯率
-  const refreshRates = () => {
-    setRateInfo('更新中…');
-    fetch('https://api.frankfurter.app/latest?from=TWD&to=USD,JPY,EUR,HKD')
-      .then(r=>r.json())
-      .then(d=>{
-        if(d.rates){
-          const r={TWD:1};
-          for(const [k,v] of Object.entries(d.rates)) r[k]=1/v;
-          Object.assign(RATES,r);
-          localStorage.setItem('fw_rates',JSON.stringify({ts:Date.now(),rates:r}));
-          setRateInfo(`已更新 ✅  1 USD≈${r.USD?.toFixed(1)} · 1 JPY≈${r.JPY?.toFixed(3)} · 1 EUR≈${r.EUR?.toFixed(1)}`);
-        }
-      }).catch(()=>setRateInfo('更新失敗，使用預設匯率'));
-  };
-
   return (
     <div className="page fade-in">
       <h2 style={{fontWeight:700,fontSize:20,marginBottom:24}}>⚙️ 設定</h2>
-      <div className="section-title">Gemini API Key</div>
+      
+      <div className="section-title">外觀與一般設定</div>
       <div className="card" style={{padding:16,marginBottom:20}}>
-        <input type="password" placeholder="AIza…" value={key} onChange={e=>setKey(e.target.value)} style={{marginBottom:12}} />
-        <label style={{fontSize:13,color:'var(--text-muted)',display:'block',marginBottom:6}}>每月預算 (TWD)</label>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+          <div style={{fontSize:14,fontWeight:600}}>🌓 主題切換 (深色 / 淺色)</div>
+          <button className="btn btn-ghost" style={{padding:'8px 16px',fontSize:13}} onClick={toggleTheme}>
+            切換為 {settings.theme === 'dark' ? '淺色模式' : '深色模式'}
+          </button>
+        </div>
+        <div style={{height:'1px', background:'var(--card-border)', margin:'0 -16px 16px'}}></div>
+        <label style={{fontSize:13,color:'var(--text-muted)',display:'block',marginBottom:6}}>每月預算</label>
         <input type="number" value={budget} onChange={e=>setBudget(e.target.value)} style={{marginBottom:12}} />
         <button className="btn btn-primary" style={{width:'100%'}} onClick={save}>{saved?'✅ 已儲存':'💾 儲存設定'}</button>
       </div>
-      <div className="section-title">匯率管理</div>
+
+      <div className="section-title">Gemini API Key</div>
       <div className="card" style={{padding:16,marginBottom:20}}>
-        <div style={{fontSize:13,color:'var(--text-muted)',marginBottom:10}}>
-          目前匯率：1 USD≈{RATES.USD?.toFixed(1)} · 1 JPY≈{RATES.JPY?.toFixed(3)} · 1 EUR≈{RATES.EUR?.toFixed(1)} · 1 HKD≈{RATES.HKD?.toFixed(2)}
-        </div>
-        {rateInfo && <div style={{fontSize:12,color:'var(--accent)',marginBottom:10}}>{rateInfo}</div>}
-        <button className="btn btn-ghost" style={{width:'100%'}} onClick={refreshRates}>💱 從 frankfurter.app 更新匯率</button>
+        <input type="password" placeholder="AIza…" value={key} onChange={e=>setKey(e.target.value)} style={{marginBottom:12}} />
+        <div style={{fontSize:12,color:'var(--text-dim)',marginBottom:16}}>*請填入您的 API Key 以啟用 AI 財務顧問及 AI 記帳功能</div>
+        <button className="btn btn-primary" style={{width:'100%'}} onClick={save}>{saved?'✅ 已儲存':'💾 儲存設定'}</button>
       </div>
+
       <div className="section-title">資料管理</div>
       <div className="card" style={{padding:16,marginBottom:20,display:'flex',flexDirection:'column',gap:10}}>
         <button className="btn btn-ghost" style={{width:'100%'}} onClick={exportData}>📤 匯出 JSON</button>
         <label className="btn btn-ghost" style={{width:'100%',cursor:'pointer'}}>📥 匯入 JSON <input type="file" accept=".json" style={{display:'none'}} onChange={importData} /></label>
       </div>
+
       <div className="section-title" style={{color:'var(--danger)'}}>危險區</div>
       <div className="card" style={{padding:16}}>
-        {!confirmReset ? <button className="btn btn-danger" style={{width:'100%'}} onClick={()=>setConfirmReset(true)}>🗑️ 重置所有資料</button>
-          : <div>
-              <div style={{fontSize:14,color:'var(--text-muted)',marginBottom:12}}>確定要清除所有資料？此操作無法復原。</div>
-              <div style={{display:'flex',gap:8}}>
-                <button className="btn btn-danger" style={{flex:1}} onClick={resetAll}>確定重置</button>
-                <button className="btn btn-ghost" style={{flex:1}} onClick={()=>setConfirmReset(false)}>取消</button>
-              </div>
-            </div>}
+        <button className="btn btn-danger" style={{width:'100%'}} onClick={()=>setConfirmReset(true)}>🗑️ 重置所有資料</button>
       </div>
+
+      <CustomModal 
+        isOpen={confirmReset}
+        title="重置所有資料"
+        text="確定要清除所有資料？此操作無法復原。"
+        textRed={true}
+        onOk={resetAll}
+        onCancel={()=>setConfirmReset(false)}
+      />
     </div>
   );
 }
@@ -731,17 +802,15 @@ function StatsPage({ txns }) {
   const total      = catData.reduce((s,c)=>s+c.value,0);
   const drillTxns  = drillCat ? txns.filter(t=>t.category===drillCat).sort((a,b)=>b.date.localeCompare(a.date)) : [];
   const hasData    = txns.length>0;
-  const hasMultiCurrency = txns.some(t=>t.currency&&t.currency!=='TWD');
   const now = new Date();
-  const totalIncome  = txns.filter(t=>isIncome(t)&&new Date(t.date).getMonth()===now.getMonth()).reduce((s,t)=>s+toTWD(t.amount,t.currency||'TWD'),0);
-  const totalExpense = txns.filter(t=>isExpense(t)&&new Date(t.date).getMonth()===now.getMonth()).reduce((s,t)=>s+toTWD(t.amount,t.currency||'TWD'),0);
+  const totalIncome  = txns.filter(t=>isIncome(t)&&new Date(t.date).getMonth()===now.getMonth()).reduce((s,t)=>s+t.amount,0);
+  const totalExpense = txns.filter(t=>isExpense(t)&&new Date(t.date).getMonth()===now.getMonth()).reduce((s,t)=>s+t.amount,0);
 
-  const ttStyle = {contentStyle:{background:'rgba(15,23,42,0.95)',border:'1px solid rgba(148,163,184,0.2)',borderRadius:10,color:'#f1f5f9'},itemStyle:{color:'#f1f5f9'},labelStyle:{color:'#f1f5f9'}};
+  const ttStyle = {contentStyle:{background:'var(--card-bg)',border:'var(--card-border)',borderRadius:10,color:'var(--text)'},itemStyle:{color:'var(--text)'},labelStyle:{color:'var(--text)'}};
 
   return (
     <div className="page fade-in">
       <h2 style={{fontWeight:700,fontSize:20,marginBottom:20}}>📊 統計</h2>
-      {hasMultiCurrency && <div style={{fontSize:12,color:'var(--text-dim)',marginBottom:12,display:'flex',alignItems:'center',gap:6}}><span>💱</span><span>圖表金額已依匯率換算為 TWD 顯示</span></div>}
 
       {/* 本月收支摘要 */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:20}}>
@@ -763,7 +832,7 @@ function StatsPage({ txns }) {
               <XAxis dataKey="name" tick={{fill:'#64748b',fontSize:12}} />
               <YAxis tick={{fill:'#64748b',fontSize:11}} />
               <Tooltip {...ttStyle} formatter={v=>fmtAmt(v)} />
-              <Bar dataKey="expense" fill="#6366f1" radius={[6,6,0,0]} name="支出" />
+              <Bar dataKey="expense" fill="#b1acb3" radius={[6,6,0,0]} name="支出" />
               <Bar dataKey="income"  fill="#10b981" radius={[6,6,0,0]} name="收入" />
               <Line type="monotone" dataKey="cumulative" stroke="#f59e0b" strokeWidth={2} dot={{fill:'#f59e0b',r:4}} name="累積支出" />
             </ComposedChart>
@@ -785,12 +854,11 @@ function StatsPage({ txns }) {
             </PieChart>
           </ResponsiveContainer>
           {/* 分類顏色標籤列表 */}
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px 12px',marginTop:14,paddingTop:12,borderTop:'1px solid rgba(148,163,184,0.08)'}}>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px 12px',marginTop:14,paddingTop:12,borderTop:'1px solid var(--card-border)'}}>
             {catData.map(entry=>(
               <div key={entry.id} style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',opacity:drillCat&&drillCat!==entry.id?0.4:1,transition:'opacity 0.2s'}} onClick={()=>setDrillCat(prev=>prev===entry.id?null:entry.id)}>
                 <span style={{width:10,height:10,borderRadius:'50%',background:entry.color,flexShrink:0}}/>
                 <span style={{fontSize:12,color:'var(--text-muted)',flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{entry.emoji} {entry.label}</span>
-                <span style={{fontSize:12,fontWeight:600,color:'var(--text)',flexShrink:0}}>{fmtAmt(entry.value)}</span>
               </div>
             ))}
           </div>
@@ -803,13 +871,13 @@ function StatsPage({ txns }) {
           <div className="card" style={{overflow:'hidden'}}>
             {drillTxns.length===0 ? <div style={{padding:'20px 16px',color:'var(--text-dim)'}}>無明細</div>
               : drillTxns.map((t,i)=>(
-                <div key={t.id} style={{display:'flex',alignItems:'center',padding:'12px 16px',borderBottom:i<drillTxns.length-1?'1px solid rgba(148,163,184,0.07)':'none'}}>
+                <div key={t.id} style={{display:'flex',alignItems:'center',padding:'12px 16px',borderBottom:i<drillTxns.length-1?'1px solid var(--card-border)':'none'}}>
                   <div style={{flex:1}}>
-                    <div style={{fontWeight:500,fontSize:14}}>{CAT_MAP[t.category]?.label||'其他'}</div>
+                    <div style={{fontWeight:600,fontSize:14}}>{CAT_MAP[t.category]?.label||'其他'}</div>
                     {t.note&&<div style={{fontSize:12,color:'var(--text-dim)',marginTop:2}}>{t.note}</div>}
                   </div>
                   <div style={{fontSize:13,color:'var(--text-dim)',marginRight:12}}>{t.date}</div>
-                  <div style={{fontWeight:600,color:isIncome(t)?'var(--accent)':'var(--danger)',fontSize:15}}>{isIncome(t)?'+':'-'}{fmtAmt(t.amount,t.currency||'TWD')}</div>
+                  <div style={{fontWeight:600,color:isIncome(t)?'var(--accent)':'var(--danger)',fontSize:15}}>{isIncome(t)?'+':'-'}{fmtAmt(t.amount)}</div>
                 </div>
               ))}
           </div>
@@ -820,12 +888,12 @@ function StatsPage({ txns }) {
       <div className="card" style={{overflow:'hidden'}}>
         {!hasData ? <div style={{padding:'20px 16px',color:'var(--text-dim)',fontSize:14,textAlign:'center'}}>尚無數據</div>
           : catData.map((c,i)=>(
-            <div key={c.id} style={{padding:'12px 16px',borderBottom:i<catData.length-1?'1px solid rgba(148,163,184,0.07)':'none'}}>
+            <div key={c.id} style={{padding:'12px 16px',borderBottom:i<catData.length-1?'1px solid var(--card-border)':'none'}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
-                <span style={{fontWeight:500,fontSize:14}}>{c.emoji} {c.label}</span>
+                <span style={{fontWeight:600,fontSize:14}}>{c.emoji} {c.label}</span>
                 <span style={{fontSize:13,color:'var(--text-muted)'}}>{fmtAmt(c.value)} · {total>0?Math.round(c.value/total*100):0}%</span>
               </div>
-              <div style={{height:6,borderRadius:3,background:'rgba(148,163,184,0.1)'}}>
+              <div style={{height:6,borderRadius:3,background:'var(--hover-bg)'}}>
                 <div style={{height:'100%',borderRadius:3,background:c.color,width:`${c.value/total*100}%`,transition:'width 0.5s'}} />
               </div>
             </div>
@@ -839,20 +907,23 @@ function StatsPage({ txns }) {
 function WalletPage({ txns, wallets, setWallets }) {
   const [expanded,setExpanded]=React.useState(null);
   const [editing,setEditing]=React.useState(null);
-  const [form,setForm]=React.useState({name:'',icon:'💵',currency:'TWD',balance:''});
-  const totalAssets=wallets.reduce((s,w)=>s+toTWD(Math.max(w.balance,0),w.currency),0);
-  const totalDebt  =wallets.reduce((s,w)=>s+toTWD(Math.min(w.balance,0),w.currency),0);
+  const [delId,setDelId]=React.useState(null);
+  const [form,setForm]=React.useState({name:'',icon:'💵',balance:''});
+  
+  const totalAssets=wallets.reduce((s,w)=>s+Math.max(w.balance,0),0);
+  const totalDebt  =wallets.reduce((s,w)=>s+Math.min(w.balance,0),0);
   const netAssets  =totalAssets+totalDebt;
-  const openNew = ()=>{setForm({name:'',icon:'💵',currency:'TWD',balance:''});setEditing('new');};
-  const openEdit=w=>{setForm({name:w.name,icon:w.icon,currency:w.currency,balance:String(w.balance)});setEditing(w.id);};
-  const save=()=>{ const w={name:form.name.trim()||'錢包',icon:form.icon||'💵',currency:form.currency,balance:parseFloat(form.balance)||0}; if(editing==='new') setWallets(prev=>[...prev,{...w,id:genId()}]); else setWallets(prev=>prev.map(x=>x.id===editing?{...x,...w}:x)); setEditing(null); };
-  const del=id=>{ if(!window.confirm('確定刪除這個錢包？')) return; setWallets(prev=>prev.filter(w=>w.id!==id)); if(expanded===id) setExpanded(null); };
+  
+  const openNew = ()=>{setForm({name:'',icon:'💵',balance:''});setEditing('new');};
+  const openEdit=w=>{setForm({name:w.name,icon:w.icon,balance:String(w.balance)});setEditing(w.id);};
+  const save=()=>{ const w={name:form.name.trim()||'錢包',icon:form.icon||'💵',balance:parseFloat(form.balance)||0}; if(editing==='new') setWallets(prev=>[...prev,{...w,id:genId()}]); else setWallets(prev=>prev.map(x=>x.id===editing?{...x,...w}:x)); setEditing(null); };
+  
+  const handleDelConfirm = ()=>{ setWallets(prev=>prev.filter(w=>w.id!==delId)); if(expanded===delId) setExpanded(null); setDelId(null); };
   const wtxns=id=>txns.filter(t=>t.walletId===id).sort((a,b)=>b.date.localeCompare(a.date));
   const ICONS=['💵','🏦','💳','🐷','💰','🏧','📱','🌏'];
-  const CURRENCIES=['TWD','USD','JPY','EUR','HKD'];
+
   return (
     <div className="page fade-in">
-      {/* 頂端標題列 + 行動按鈕 */}
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
         <h2 style={{fontWeight:700,fontSize:20}}>💳 帳戶</h2>
         {editing===null
@@ -864,7 +935,6 @@ function WalletPage({ txns, wallets, setWallets }) {
         }
       </div>
 
-      {/* 行內展開表單 */}
       {editing!==null&&(
         <div className="card fade-in" style={{padding:20,marginBottom:20}}>
           <div style={{fontSize:13,fontWeight:600,color:'var(--text-muted)',marginBottom:14}}>
@@ -872,11 +942,8 @@ function WalletPage({ txns, wallets, setWallets }) {
           </div>
           <div style={{display:'flex',flexDirection:'column',gap:12}}>
             <div><label style={{fontSize:13,color:'var(--text-muted)',display:'block',marginBottom:6}}>名稱</label><input value={form.name} onChange={e=>setForm(p=>({...p,name:e.target.value}))} placeholder="錢包名稱" /></div>
-            <div><label style={{fontSize:13,color:'var(--text-muted)',display:'block',marginBottom:6}}>圖示</label><div style={{display:'flex',gap:8,flexWrap:'wrap'}}>{ICONS.map(ic=><button key={ic} onClick={()=>setForm(p=>({...p,icon:ic}))} style={{width:44,height:44,borderRadius:10,fontSize:22,border:form.icon===ic?'2px solid var(--primary)':'2px solid transparent',background:form.icon===ic?'rgba(99,102,241,0.2)':'rgba(30,41,59,0.5)',cursor:'pointer'}}>{ic}</button>)}</div></div>
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
-              <div><label style={{fontSize:13,color:'var(--text-muted)',display:'block',marginBottom:6}}>幣別</label><select value={form.currency} onChange={e=>setForm(p=>({...p,currency:e.target.value}))}>{CURRENCIES.map(c=><option key={c} value={c}>{c}</option>)}</select></div>
-              <div><label style={{fontSize:13,color:'var(--text-muted)',display:'block',marginBottom:6}}>餘額</label><input type="number" value={form.balance} onChange={e=>setForm(p=>({...p,balance:e.target.value}))} /></div>
-            </div>
+            <div><label style={{fontSize:13,color:'var(--text-muted)',display:'block',marginBottom:6}}>圖示</label><div style={{display:'flex',gap:8,flexWrap:'wrap'}}>{ICONS.map(ic=><button key={ic} onClick={()=>setForm(p=>({...p,icon:ic}))} style={{width:44,height:44,borderRadius:10,fontSize:22,border:form.icon===ic?'2px solid var(--primary)':'2px solid transparent',background:form.icon===ic?'rgba(177,172,179,0.2)':'var(--input-bg)',cursor:'pointer'}}>{ic}</button>)}</div></div>
+            <div><label style={{fontSize:13,color:'var(--text-muted)',display:'block',marginBottom:6}}>餘額</label><input type="number" value={form.balance} onChange={e=>setForm(p=>({...p,balance:e.target.value}))} /></div>
           </div>
         </div>
       )}
@@ -895,52 +962,60 @@ function WalletPage({ txns, wallets, setWallets }) {
         return (
           <div key={w.id} className="card" style={{marginBottom:12,overflow:'hidden'}}>
             <div style={{display:'flex',alignItems:'center',padding:'14px 16px',cursor:'pointer'}} onClick={()=>setExpanded(isOpen?null:w.id)}>
-              <div style={{width:42,height:42,borderRadius:12,background:'rgba(99,102,241,0.15)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,marginRight:14}}>{w.icon}</div>
-              <div style={{flex:1}}><div style={{fontWeight:600,fontSize:15}}>{w.name}</div><div style={{fontSize:12,color:'var(--text-dim)'}}>{w.currency} · {wt.length} 筆</div></div>
-              <div style={{textAlign:'right',marginRight:12}}><div style={{fontWeight:700,color:w.balance>=0?'var(--text)':'var(--danger)',fontSize:16}}>{fmtAmt(w.balance,w.currency)}</div></div>
+              <div style={{width:42,height:42,borderRadius:12,background:'rgba(177,172,179,0.15)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,marginRight:14}}>{w.icon}</div>
+              <div style={{flex:1}}><div style={{fontWeight:600,fontSize:15}}>{w.name}</div><div style={{fontSize:12,color:'var(--text-dim)'}}>{wt.length} 筆交易</div></div>
+              <div style={{textAlign:'right',marginRight:12}}><div style={{fontWeight:700,color:w.balance>=0?'var(--text)':'var(--danger)',fontSize:16}}>{fmtAmt(w.balance)}</div></div>
               <div style={{display:'flex',gap:6}}>
                 <button className="btn btn-ghost" style={{padding:'6px 10px',fontSize:13}} onClick={e=>{e.stopPropagation();openEdit(w);}}>✏️</button>
-                <button className="btn btn-danger" style={{padding:'6px 10px',fontSize:13}} onClick={e=>{e.stopPropagation();del(w.id);}}>🗑️</button>
+                <button className="btn btn-danger" style={{padding:'6px 10px',fontSize:13}} onClick={e=>{e.stopPropagation();setDelId(w.id);}}>🗑️</button>
               </div>
             </div>
-            {isOpen && <div style={{borderTop:'1px solid rgba(148,163,184,0.08)'}}>
+            {isOpen && <div style={{borderTop:'1px solid var(--card-border)'}}>
               {wt.length===0?<div style={{padding:16,color:'var(--text-dim)',fontSize:14}}>此錢包尚無交易</div>
                 :wt.slice(0,10).map((t,i)=>{ const cat=CAT_MAP[t.category]||CAT_MAP.other; return (
-                  <div key={t.id} style={{display:'flex',alignItems:'center',padding:'10px 16px',borderTop:i===0?'none':'1px solid rgba(148,163,184,0.06)'}}>
+                  <div key={t.id} style={{display:'flex',alignItems:'center',padding:'10px 16px',borderTop:i===0?'none':'1px solid var(--card-border)'}}>
                     <span style={{fontSize:18,marginRight:10}}>{cat.emoji}</span>
-                    <div style={{flex:1}}><div style={{fontSize:13,fontWeight:500}}>{cat.label}</div>{t.note&&<div style={{fontSize:11,color:'var(--text-dim)'}}>{t.note}</div>}</div>
+                    <div style={{flex:1}}><div style={{fontSize:13,fontWeight:600}}>{cat.label}</div>{t.note&&<div style={{fontSize:11,color:'var(--text-dim)'}}>{t.note}</div>}</div>
                     <div style={{fontSize:12,color:'var(--text-dim)',marginRight:10}}>{t.date}</div>
-                    <div style={{fontSize:14,fontWeight:600,color:isIncome(t)?'var(--accent)':'var(--danger)'}}>{isIncome(t)?'+':'-'}{fmtAmt(t.amount,t.currency||'TWD')}</div>
+                    <div style={{fontSize:14,fontWeight:600,color:isIncome(t)?'var(--accent)':'var(--danger)'}}>{isIncome(t)?'+':'-'}{fmtAmt(t.amount)}</div>
                   </div>
                 );})}
             </div>}
           </div>
         );
       })}
+
+      <CustomModal 
+        isOpen={!!delId}
+        title="刪除錢包"
+        text="確定要刪除這個錢包嗎？相關的交易記錄仍會保留。"
+        onOk={handleDelConfirm}
+        onCancel={()=>setDelId(null)}
+      />
     </div>
   );
 }
 
 // ─── 訂閱管理頁 ──────────────────────────────────────────────
-function SubsPage({ subs, setSubs, wallets, setTxns, setWallets }) {
+function SubsPage({ subs, setSubs }) {
   const [editing,setEditing]=React.useState(null);
-  const [form,setForm]=React.useState({name:'',icon:'📱',amount:'',currency:'TWD',billingDay:'1',lastUsed:todayStr(),active:true});
-  const openNew=()=>{setForm({name:'',icon:'📱',amount:'',currency:'TWD',billingDay:'1',lastUsed:todayStr(),active:true});setEditing('new');};
+  const [delId,setDelId]=React.useState(null);
+  const [form,setForm]=React.useState({name:'',icon:'📱',amount:'',billingDay:'1',lastUsed:todayStr(),active:true});
+  
+  const openNew=()=>{setForm({name:'',icon:'📱',amount:'',billingDay:'1',lastUsed:todayStr(),active:true});setEditing('new');};
   const openEdit=s=>{setForm({...s,amount:String(s.amount),billingDay:String(s.billingDay)});setEditing(s.id);};
   const save=()=>{ const s={...form,amount:parseFloat(form.amount)||0,billingDay:parseInt(form.billingDay)||1}; if(editing==='new') setSubs(prev=>[...prev,{...s,id:genId()}]); else setSubs(prev=>prev.map(x=>x.id===editing?{...x,...s}:x)); setEditing(null); };
-  const del=id=>{ if(!window.confirm('確定刪除？')) return; setSubs(prev=>prev.filter(s=>s.id!==id)); };
   const toggle=id=>setSubs(prev=>prev.map(s=>s.id===id?{...s,active:!s.active}:s));
   const daysUntil=bd=>{ const now=new Date(); let next=new Date(now.getFullYear(),now.getMonth(),bd); if(next<=now) next=new Date(now.getFullYear(),now.getMonth()+1,bd); return Math.ceil((next-now)/86400000); };
   const isZombie=s=>s.lastUsed&&Math.floor((Date.now()-new Date(s.lastUsed))/86400000)>60;
-  const monthTotal=getMonthSubs(subs);
-  const yearWaste=subs.filter(s=>isZombie(s)&&s.active).reduce((sum,s)=>sum+toTWD(s.amount,s.currency||'TWD')*12,0);
-  const today=new Date().getDate();
-  const todaySubs=subs.filter(s=>s.active&&s.billingDay===today);
-  const quickRecord=s=>{ const w=wallets[0]; if(!w){alert('請先新增錢包');return;} const t={id:genId(),amount:s.amount,category:'other',walletId:w.id,note:`訂閱：${s.name}`,date:todayStr(),currency:s.currency||'TWD',type:'expense'}; setTxns(prev=>[t,...prev]); setWallets(prev=>prev.map(x=>x.id===w.id?{...x,balance:x.balance-s.amount}:x)); alert(`已記帳：${s.name} ${fmtAmt(s.amount,s.currency||'TWD')}`); };
+  
+  const monthTotal=subs.filter(s=>s.active).reduce((s,x)=>s+x.amount,0);
+  const yearWaste=subs.filter(s=>isZombie(s)&&s.active).reduce((sum,s)=>sum+s.amount*12,0);
+  
   const ICONS=['📱','🎵','🎬','🎮','☁️','📚','🏋️','🛒','💼','🌐'];
+
   return (
     <div className="page fade-in">
-      {/* 頂端標題列 + 行動按鈕 */}
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
         <h2 style={{fontWeight:700,fontSize:20}}>📋 訂閱管理</h2>
         {editing===null
@@ -952,56 +1027,62 @@ function SubsPage({ subs, setSubs, wallets, setTxns, setWallets }) {
         }
       </div>
 
-      {/* 行內展開表單 */}
+      <div className="info-banner" style={{marginBottom:16}}>
+        <span style={{fontSize:20}}>🤖</span>
+        <div style={{flex:1}}><div style={{fontWeight:700,fontSize:14}}>全自動扣款啟用中</div><div style={{fontSize:12,color:'var(--text-dim)',marginTop:2}}>系統會根據您設定的扣款日期，自動在當天為您新增一筆訂閱消費記錄，不需手動記帳。若從首頁刪除自動記帳，相關的訂閱也會同時被移除。</div></div>
+      </div>
+
       {editing!==null&&(
         <div className="card fade-in" style={{padding:20,marginBottom:20}}>
-          <div style={{fontSize:13,fontWeight:600,color:'var(--text-muted)',marginBottom:14}}>
+          <div style={{fontSize:13,fontWeight:700,color:'var(--text-muted)',marginBottom:14}}>
             {editing==='new'?'新增訂閱資訊':'編輯訂閱資訊'}
           </div>
           <div style={{display:'flex',flexDirection:'column',gap:12}}>
             <div><label style={{fontSize:13,color:'var(--text-muted)',display:'block',marginBottom:6}}>名稱</label><input value={form.name} onChange={e=>setForm(p=>({...p,name:e.target.value}))} placeholder="例：Netflix" /></div>
-            <div><label style={{fontSize:13,color:'var(--text-muted)',display:'block',marginBottom:6}}>圖示</label><div style={{display:'flex',gap:8,flexWrap:'wrap'}}>{ICONS.map(ic=><button key={ic} onClick={()=>setForm(p=>({...p,icon:ic}))} style={{width:44,height:44,borderRadius:10,fontSize:22,border:form.icon===ic?'2px solid var(--primary)':'2px solid transparent',background:form.icon===ic?'rgba(99,102,241,0.2)':'rgba(30,41,59,0.5)',cursor:'pointer'}}>{ic}</button>)}</div></div>
+            <div><label style={{fontSize:13,color:'var(--text-muted)',display:'block',marginBottom:6}}>圖示</label><div style={{display:'flex',gap:8,flexWrap:'wrap'}}>{ICONS.map(ic=><button key={ic} onClick={()=>setForm(p=>({...p,icon:ic}))} style={{width:44,height:44,borderRadius:10,fontSize:22,border:form.icon===ic?'2px solid var(--primary)':'2px solid transparent',background:form.icon===ic?'rgba(177,172,179,0.2)':'var(--input-bg)',cursor:'pointer'}}>{ic}</button>)}</div></div>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
               <div><label style={{fontSize:13,color:'var(--text-muted)',display:'block',marginBottom:6}}>月費</label><input type="number" value={form.amount} onChange={e=>setForm(p=>({...p,amount:e.target.value}))} placeholder="0" /></div>
               <div><label style={{fontSize:13,color:'var(--text-muted)',display:'block',marginBottom:6}}>扣款日（號）</label><input type="number" min="1" max="28" value={form.billingDay} onChange={e=>setForm(p=>({...p,billingDay:e.target.value}))} /></div>
             </div>
-            <div><label style={{fontSize:13,color:'var(--text-muted)',display:'block',marginBottom:6}}>最後使用日</label><input type="date" value={form.lastUsed} onChange={e=>setForm(p=>({...p,lastUsed:e.target.value}))} /></div>
+            <div><label style={{fontSize:13,color:'var(--text-muted)',display:'block',marginBottom:6}}>實際最後使用日（供殭屍訂閱偵測）</label><input type="date" value={form.lastUsed} onChange={e=>setForm(p=>({...p,lastUsed:e.target.value}))} /></div>
           </div>
         </div>
       )}
 
-      {todaySubs.length>0&&todaySubs.map(s=>(
-        <div key={s.id} className="info-banner" style={{marginBottom:10}}>
-          <span style={{fontSize:20}}>{s.icon}</span>
-          <div style={{flex:1}}><div style={{fontWeight:600,fontSize:14}}>📅 今日扣款：{s.name}</div><div style={{fontSize:12,color:'var(--text-dim)',marginTop:2}}>{fmtAmt(s.amount,s.currency||'TWD')}/月</div></div>
-          <button className="btn btn-success" style={{padding:'8px 14px',fontSize:13}} onClick={()=>quickRecord(s)}>記帳</button>
-        </div>
-      ))}
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:20}}>
-        <div className="card" style={{padding:'14px 16px'}}><div style={{fontSize:12,color:'var(--text-muted)',marginBottom:4}}>本月訂閱支出</div><div style={{fontWeight:700,fontSize:20,color:'var(--primary)'}}>{fmtAmt(monthTotal)}</div></div>
+        <div className="card" style={{padding:'14px 16px'}}><div style={{fontSize:12,color:'var(--text-muted)',marginBottom:4}}>本月訂閱支出</div><div style={{fontWeight:700,fontSize:20,color:'var(--text)'}}>{fmtAmt(monthTotal)}</div></div>
         <div className="card" style={{padding:'14px 16px'}}><div style={{fontSize:12,color:'var(--text-muted)',marginBottom:4}}>殭屍年度浪費</div><div style={{fontWeight:700,fontSize:20,color:yearWaste>0?'var(--danger)':'var(--text-dim)'}}>{fmtAmt(yearWaste)}</div></div>
       </div>
+      
       {subs.length===0?<div style={{textAlign:'center',padding:'40px 0',color:'var(--text-dim)'}}><div style={{fontSize:40}}>📭</div><div style={{marginTop:8}}>尚無訂閱</div></div>
         :subs.map(s=>{ const zombie=isZombie(s); const dl=daysUntil(s.billingDay); return (
           <div key={s.id} className="card" style={{padding:'14px 16px',marginBottom:12,opacity:s.active?1:0.5,animation:zombie&&s.active?'pulseRed 2s infinite':'none',border:zombie&&s.active?'1px solid rgba(239,68,68,0.4)':'var(--card-border)'}}>
             <div style={{display:'flex',alignItems:'center'}}>
-              <div style={{width:42,height:42,borderRadius:12,background:'rgba(99,102,241,0.15)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,marginRight:14,flexShrink:0}}>{s.icon}</div>
+              <div style={{width:42,height:42,borderRadius:12,background:'rgba(177,172,179,0.15)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,marginRight:14,flexShrink:0}}>{s.icon}</div>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
                   <span style={{fontWeight:600,fontSize:15}}>{s.name}</span>
                   {zombie&&s.active&&<span className="badge" style={{background:'rgba(239,68,68,0.15)',color:'var(--danger)',fontSize:10}}>🧟 殭屍</span>}
                   {!s.active&&<span className="badge" style={{background:'rgba(148,163,184,0.1)',color:'var(--text-dim)',fontSize:10}}>已取消</span>}
                 </div>
-                <div style={{fontSize:12,color:'var(--text-dim)',marginTop:2}}>{s.active?`${dl} 天後扣款`:'已暫停'} · {fmtAmt(s.amount,s.currency||'TWD')}/月</div>
+                <div style={{fontSize:12,color:'var(--text-dim)',marginTop:2}}>{s.active?`${dl} 天後自動扣款`:'已暫停'} · {fmtAmt(s.amount)}/月</div>
               </div>
               <div style={{display:'flex',gap:6}}>
                 <button className="btn btn-ghost" style={{padding:'6px 10px',fontSize:13}} onClick={()=>toggle(s.id)}>{s.active?'⏸':'▶️'}</button>
                 <button className="btn btn-ghost" style={{padding:'6px 10px',fontSize:13}} onClick={()=>openEdit(s)}>✏️</button>
-                <button className="btn btn-danger" style={{padding:'6px 10px',fontSize:13}} onClick={()=>del(s.id)}>🗑️</button>
+                <button className="btn btn-danger" style={{padding:'6px 10px',fontSize:13}} onClick={()=>setDelId(s.id)}>🗑️</button>
               </div>
             </div>
           </div>
         );})}
+
+      <CustomModal 
+        isOpen={!!delId}
+        title="刪除訂閱"
+        text="確定要刪除這個訂閱嗎？未來的扣款將不再自動產生。"
+        onOk={()=>{setSubs(p=>p.filter(s=>s.id!==delId)); setDelId(null);}}
+        onCancel={()=>setDelId(null)}
+      />
     </div>
   );
 }
@@ -1011,6 +1092,7 @@ function AIPage({ txns, settings }) {
   const [history, setHistory] = useLS('fw_chat', []);
   const [input,   setInput]   = React.useState('');
   const [loading, setLoading] = React.useState(false);
+  const [clearConfirm, setClearConfirm] = React.useState(false);
   const bottomRef = React.useRef(null);
 
   React.useEffect(()=>{ bottomRef.current?.scrollIntoView({behavior:'smooth'}); }, [history, loading]);
@@ -1018,8 +1100,8 @@ function AIPage({ txns, settings }) {
   const QUICK_PROMPTS = ['這個月花最多的分類是什麼？','幫我找出超過 500 元的消費','比較這週和上週的支出','給我三個具體省錢建議'];
 
   const buildContext = () => {
-    const recent = txns.slice(0,30).map(t=>({ date:t.date, type:isIncome(t)?'收入':'支出', category:CAT_MAP[t.category]?.label||t.category, amount:Math.round(toTWD(t.amount,t.currency||'TWD')), note:t.note||'' }));
-    return `你是一位理財顧問助理。使用者的近期交易數據（最多 30 筆，已換算為 TWD）如下：\n${JSON.stringify(recent,null,2)}\n\n請用繁體中文回答，可以使用 Markdown 格式排版。回答要具體、簡潔、有洞察力。`;
+    const recent = txns.slice(0,30).map(t=>({ date:t.date, type:isIncome(t)?'收入':'支出', category:CAT_MAP[t.category]?.label||t.category, amount:t.amount, note:t.note||'' }));
+    return `你是一位理財顧問助理。使用者的近期交易數據（最多 30 筆，幣別皆為 TWD）如下：\n${JSON.stringify(recent,null,2)}\n\n請用繁體中文回答，可以使用 Markdown 格式排版。回答要具體、簡潔、有洞察力。`;
   };
 
   const sendMessage = async (text) => {
@@ -1035,7 +1117,6 @@ function AIPage({ txns, settings }) {
     setLoading(true);
 
     try {
-      // 建立 Gemini 多輪格式（必須交替 user/model）
       const contents = newHistory.map(m=>({ role:m.role==='user'?'user':'model', parts:[{text:m.content}] }));
       const res = await fetchWithBackoff(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
@@ -1054,13 +1135,11 @@ function AIPage({ txns, settings }) {
 
   return (
     <div style={{display:'flex',flexDirection:'column',height:'100vh',background:'var(--bg)',maxWidth:430,margin:'0 auto'}}>
-      {/* 標題 */}
-      <div style={{padding:'16px 16px 12px',borderBottom:'var(--card-border)',background:'rgba(15,23,42,0.95)',backdropFilter:'blur(20px)',flexShrink:0}}>
+      <div style={{padding:'16px 16px 12px',borderBottom:'var(--card-border)',background:'var(--nav-bg)',backdropFilter:'blur(20px)',flexShrink:0,transition:'background-color 0.4s'}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <div><div style={{fontWeight:700,fontSize:18}}>💡 AI 財務顧問</div><div style={{fontSize:12,color:'var(--text-dim)'}}>Gemini 2.0 Flash · {txns.length} 筆交易數據</div></div>
-          <button className="btn btn-ghost" style={{padding:'6px 12px',fontSize:12}} onClick={()=>{if(window.confirm('確定清除所有對話記錄？')) setHistory([]);}}>清除</button>
+          <button className="btn btn-ghost" style={{padding:'6px 12px',fontSize:12}} onClick={()=>setClearConfirm(true)}>清除</button>
         </div>
-        {/* 快捷問題 */}
         {history.length===0 && (
           <div className="filter-chips" style={{marginTop:10}}>
             {QUICK_PROMPTS.map(q=><button key={q} className="chip" onClick={()=>sendMessage(q)} style={{fontSize:12}}>{q}</button>)}
@@ -1068,7 +1147,6 @@ function AIPage({ txns, settings }) {
         )}
       </div>
 
-      {/* 對話區 */}
       <div style={{flex:1,overflowY:'auto',padding:'16px',display:'flex',flexDirection:'column',gap:12}}>
         {history.length===0 && (
           <div style={{textAlign:'center',marginTop:40,color:'var(--text-dim)'}}>
@@ -1095,8 +1173,7 @@ function AIPage({ txns, settings }) {
         <div ref={bottomRef} />
       </div>
 
-      {/* 輸入區 */}
-      <div style={{padding:'12px 16px',paddingBottom:'calc(var(--nav-h) + 12px)',borderTop:'var(--card-border)',background:'rgba(15,23,42,0.95)',backdropFilter:'blur(20px)',flexShrink:0}}>
+      <div style={{padding:'12px 16px',paddingBottom:'calc(var(--nav-h) + 12px)',borderTop:'var(--card-border)',background:'var(--nav-bg)',backdropFilter:'blur(20px)',flexShrink:0,transition:'background-color 0.4s'}}>
         <div style={{display:'flex',gap:10,alignItems:'flex-end'}}>
           <textarea
             rows={1} value={input}
@@ -1111,6 +1188,14 @@ function AIPage({ txns, settings }) {
           </button>
         </div>
       </div>
+
+      <CustomModal 
+        isOpen={clearConfirm}
+        title="清除對話"
+        text="確定要清除所有的 AI 對話記錄嗎？"
+        onOk={()=>{setHistory([]); setClearConfirm(false);}}
+        onCancel={()=>setClearConfirm(false)}
+      />
     </div>
   );
 }
@@ -1123,29 +1208,66 @@ function App() {
   const [subs,    setSubs]    = useLS('fw_subscriptions', []);
   const [settings,setSettings]= useLS('fw_settings',      DEFAULT_SETTINGS);
   const [editTxn, setEditTxn] = React.useState(null);
-  const [,forceUpdate]        = React.useState(0);
 
-  // [修正7] 背景抓取最新匯率
-  React.useEffect(()=>{
-    fetch('https://api.frankfurter.app/latest?from=TWD&to=USD,JPY,EUR,HKD')
-      .then(r=>r.json())
-      .then(d=>{
-        if(d.rates){
-          const r={TWD:1};
-          for(const [k,v] of Object.entries(d.rates)) r[k]=1/v;
-          Object.assign(RATES,r);
-          localStorage.setItem('fw_rates',JSON.stringify({ts:Date.now(),rates:r}));
-          forceUpdate(n=>n+1);
+  // 初始化主題
+  React.useEffect(() => {
+    document.documentElement.setAttribute('data-theme', settings.theme || 'light');
+  }, [settings.theme]);
+
+  // 🤖 自動化：檢查訂閱扣款並自動新增交易
+  React.useEffect(() => {
+    if (!wallets.length || !subs.length) return;
+    let hasChanges = false;
+    const now = new Date();
+    const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const today = now.getDate();
+
+    const newSubs = subs.map(s => {
+      if (!s.active) return s;
+      if (s.lastBilledMonth !== currentYearMonth && today >= parseInt(s.billingDay)) {
+        hasChanges = true;
+        return { ...s, _needsBilling: true };
+      }
+      return s;
+    });
+
+    if (hasChanges) {
+      let updatedTxns = [...txns];
+      let updatedWallets = [...wallets];
+      const finalSubs = newSubs.map(s => {
+        if (s._needsBilling) {
+          const wId = updatedWallets[0]?.id; // 預設從第一個錢包扣款
+          if (wId) {
+            const amt = parseFloat(s.amount) || 0;
+            updatedTxns.unshift({
+              id: genId(),
+              amount: amt,
+              category: 'other',
+              walletId: wId,
+              note: `訂閱扣款：${s.name}`,
+              date: todayStr(),
+              type: 'expense',
+              subId: s.id // 加入這個讓首頁能追蹤此筆帳款
+            });
+            updatedWallets[0].balance -= amt;
+          }
+          delete s._needsBilling;
+          s.lastBilledMonth = currentYearMonth;
         }
-      }).catch(()=>{});
-  },[]);
+        return s;
+      });
+      setTxns(updatedTxns);
+      setWallets(updatedWallets);
+      setSubs(finalSubs);
+    }
+  }, [subs, txns, wallets, setTxns, setWallets, setSubs]);
 
   const pages = {
-    home:     <HomePage     txns={txns} setTxns={setTxns} wallets={wallets} setWallets={setWallets} subs={subs} settings={settings} setPage={setPage} setEditTxn={setEditTxn} />,
+    home:     <HomePage     txns={txns} setTxns={setTxns} wallets={wallets} setWallets={setWallets} subs={subs} setSubs={setSubs} settings={settings} setPage={setPage} setEditTxn={setEditTxn} />,
     stats:    <StatsPage    txns={txns} />,
     wallets:  <WalletPage   txns={txns} wallets={wallets} setWallets={setWallets} />,
     add:      <AddPage      wallets={wallets} settings={settings} setTxns={setTxns} setWallets={setWallets} setPage={setPage} editTxn={editTxn} setEditTxn={setEditTxn} />,
-    subs:     <SubsPage     subs={subs} setSubs={setSubs} wallets={wallets} setTxns={setTxns} setWallets={setWallets} />,
+    subs:     <SubsPage     subs={subs} setSubs={setSubs} />,
     ai:       <AIPage       txns={txns} settings={settings} />,
     settings: <SettingsPage settings={settings} setSettings={setSettings} />,
   };
