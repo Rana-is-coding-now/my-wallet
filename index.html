@@ -594,7 +594,7 @@ function HomePage({ txns, setTxns, wallets, setWallets, subs, setSubs, settings,
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:20}}>
         <div>
           <div style={{fontSize:12,color:'var(--text-dim)',marginBottom:2}}>{dateLabel}</div>
-          <div style={{fontSize:13,color:'var(--text-muted)',marginBottom:4}}>今日可支配餘額</div>
+          <div style={{fontSize:13,color:'var(--text-muted)',marginBottom:4}}>錢包總餘額（扣除訂閱預估）</div>
           <div className="gradient-text" style={{fontSize:34,fontWeight:700,letterSpacing:'-0.02em'}}>{fmtAmt(disposable)}</div>
         </div>
         <div style={{textAlign:'right',fontSize:12,color:'var(--text-dim)',marginTop:20}}>
@@ -616,12 +616,16 @@ function HomePage({ txns, setTxns, wallets, setWallets, subs, setSubs, settings,
 
       <div className="card" style={{padding:16,marginBottom:12}}>
         <div style={{display:'flex',justifyContent:'space-between',fontSize:13,marginBottom:8}}>
-          <span style={{color:'var(--text-muted)'}}>本月預算餘額</span>
-          <span style={{color:over?'var(--danger)':'var(--text-muted)', fontWeight:600}}>{fmtAmt(Math.max(budget - spent, 0))} / {fmtAmt(budget)}</span>
+          <span style={{color:'var(--text-muted)'}}>本月預算剩餘</span>
+          <span style={{color:over?'var(--danger)':'var(--text-muted)', fontWeight:600}}>{fmtAmt(Math.max(budget-spent,0))} / {fmtAmt(budget)}</span>
         </div>
         <div className="progress-bar">
-          <div className="progress-fill" style={{width:`${pct}%`,background:over?'var(--danger)':pct<20?'var(--warning)':'var(--accent)'}} />
+          <div className="progress-fill" style={{width:`${Math.max((budget-spent)/budget*100,0)}%`,background:over?'var(--danger)':(budget-spent)/budget<0.2?'var(--warning)':'var(--accent)'}} />
           <div className="progress-mark" style={{left:'20%'}} />
+        </div>
+        <div style={{display:'flex',justifyContent:'space-between',fontSize:11,color:'var(--text-dim)',marginTop:5}}>
+          <span>已花 {fmtAmt(spent)}</span>
+          <span>剩餘 {Math.round(Math.max((budget-spent)/budget*100,0))}%</span>
         </div>
         {willOver && (
           <div style={{marginTop:10,fontSize:12,color:'var(--warning)',display:'flex',alignItems:'center',gap:6}}>
