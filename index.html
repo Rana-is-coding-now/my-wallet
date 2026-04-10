@@ -347,10 +347,11 @@ function getDateRange(preset) {
   return [null, null];
 }
 
-// ─── 【修改 2】：強化版 API 呼叫 ────────────────────────────────
-// 回傳結構：{ ok: bool, data: object|null, errorMsg: string, httpStatus: number }
-async function callGeminiAPI(key, body, retries=3, delay=800) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`;
+// ─── 【修改 2】：強化版 API 呼叫，含 503 自動 fallback ──────────
+const FALLBACK_MODEL = 'gemini-2.5-flash-lite';
+
+async function callGeminiAPIWithModel(key, model, body, retries=3, delay=2000) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
   let lastStatus = 0;
   for (let i = 0; i <= retries; i++) {
     let res;
@@ -361,32 +362,44 @@ async function callGeminiAPI(key, body, retries=3, delay=800) {
         body: JSON.stringify(body),
       });
     } catch (networkErr) {
-      if (i === retries) return { ok:false, data:null, errorMsg:`網路錯誤：${networkErr.message}`, httpStatus:0 };
+      if (i === retries) return { ok:false, data:null, errorMsg:`網路錯誤：${networkErr.message}`, httpStatus:0, model };
       await new Promise(r => setTimeout(r, delay * Math.pow(2, i)));
       continue;
     }
 
     lastStatus = res.status;
 
-    // 429 重試
-    if (res.status === 429 && i < retries) {
+    // 429 / 503 → 等更久再重試
+    if ((res.status === 429 || res.status === 503) && i < retries) {
       await new Promise(r => setTimeout(r, delay * Math.pow(2, i)));
       continue;
     }
 
     let data = null;
-    try { data = await res.json(); } catch { /* 非 JSON 回應 */ }
+    try { data = await res.json(); } catch {}
 
     if (!res.ok) {
-      // ── 擷取 Google API 的錯誤訊息 ──
       const apiMsg = data?.error?.message || data?.error?.status || null;
-      const hint   = getErrorHint(res.status, apiMsg, key);
-      return { ok:false, data, errorMsg: hint, httpStatus: res.status };
+      return { ok:false, data, errorMsg: getErrorHint(res.status, apiMsg, key), httpStatus: res.status, model };
     }
 
-    return { ok:true, data, errorMsg:'', httpStatus: res.status };
+    return { ok:true, data, errorMsg:'', httpStatus: res.status, model };
   }
-  return { ok:false, data:null, errorMsg:`請求失敗，HTTP ${lastStatus}`, httpStatus: lastStatus };
+  return { ok:false, data:null, errorMsg:`請求失敗，HTTP ${lastStatus}`, httpStatus: lastStatus, model };
+}
+
+// 主入口：先試主模型，503 自動切換備用模型
+async function callGeminiAPI(key, body) {
+  const primary = await callGeminiAPIWithModel(key, GEMINI_MODEL, body);
+  if (!primary.ok && primary.httpStatus === 503) {
+    const fallback = await callGeminiAPIWithModel(key, FALLBACK_MODEL, body);
+    if (fallback.ok) return { ...fallback, usedFallback: true };
+    return {
+      ...fallback,
+      errorMsg: `主模型（${GEMINI_MODEL}）與備用模型（${FALLBACK_MODEL}）均無法使用。\n` + fallback.errorMsg,
+    };
+  }
+  return primary;
 }
 
 // ─── 【修改 3】：依錯誤碼給出中文提示 ──────────────────────────
@@ -1197,6 +1210,8 @@ function AIPage({ txns, settings }) {
   const [input,   setInput]   = React.useState('');
   const [loading, setLoading] = React.useState(false);
   const [clearConfirm, setClearConfirm] = React.useState(false);
+  const [activeModel, setActiveModel] = React.useState(GEMINI_MODEL);
+  const [usingFallback, setUsingFallback] = React.useState(false);
   const bottomRef = React.useRef(null);
 
   React.useEffect(()=>{ bottomRef.current?.scrollIntoView({behavior:'smooth'}); }, [history, loading]);
@@ -1246,6 +1261,8 @@ function AIPage({ txns, settings }) {
       }
 
       const reply = result.data?.candidates?.[0]?.content?.parts?.[0]?.text || '抱歉，沒有收到回應';
+      if (result.usedFallback) { setActiveModel(FALLBACK_MODEL); setUsingFallback(true); }
+      else { setActiveModel(GEMINI_MODEL); setUsingFallback(false); }
       setHistory(prev=>[...prev,{role:'assistant',content:reply,ts:Date.now()}]);
     } catch(e) {
       setHistory(prev=>[...prev,{
@@ -1266,8 +1283,11 @@ function AIPage({ txns, settings }) {
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <div>
             <div style={{fontWeight:700,fontSize:18}}>💡 AI 財務顧問</div>
-            {/* ── 顯示當前模型名稱 ── */}
-            <div style={{fontSize:11,color:'var(--text-dim)'}}>{GEMINI_MODEL} · {txns.length} 筆交易數據</div>
+            <div style={{fontSize:11,color:'var(--text-dim)',display:'flex',alignItems:'center',gap:4}}>
+              <span>{activeModel}</span>
+              {usingFallback && <span style={{background:'rgba(245,158,11,0.15)',color:'var(--warning)',borderRadius:6,padding:'1px 6px',fontSize:10,fontWeight:600}}>備用中</span>}
+              <span>· {txns.length} 筆數據</span>
+            </div>
           </div>
           <button className="btn btn-ghost" style={{padding:'6px 12px',fontSize:12}} onClick={()=>setClearConfirm(true)}>清除</button>
         </div>
