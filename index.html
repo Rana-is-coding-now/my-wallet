@@ -4,6 +4,88 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Family Wallet</title>
+
+  <!-- ── PWA 基本設定 ── -->
+  <meta name="application-name" content="Family Wallet" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="家庭錢包" />
+  <meta name="theme-color" content="#b1acb3" />
+
+  <!-- ── 動態產生錢包圖示（純 Canvas，不依賴外部圖片）── -->
+  <script>
+    (function () {
+      function makeIcon(size) {
+        const c = document.createElement('canvas');
+        c.width = c.height = size;
+        const ctx = c.getContext('2d');
+        const r = size * 0.22;
+
+        // 圓角背景（紫灰漸層）
+        const g = ctx.createLinearGradient(0, 0, size, size);
+        g.addColorStop(0, '#c8c2ca');
+        g.addColorStop(1, '#8f8a91');
+        ctx.beginPath();
+        ctx.moveTo(r, 0); ctx.arcTo(size,0,size,size,r);
+        ctx.arcTo(size,size,0,size,r); ctx.arcTo(0,size,0,0,r);
+        ctx.arcTo(0,0,size,0,r); ctx.closePath();
+        ctx.fillStyle = g; ctx.fill();
+
+        // 錢包本體（白色圓角矩形）
+        const p=size*0.14, w=size-p*2, h=size*0.48, y0=size*0.30, br=size*0.08;
+        ctx.fillStyle='#ffffff';
+        ctx.beginPath(); ctx.roundRect(p,y0,w,h,br); ctx.fill();
+
+        // 錢包上蓋
+        ctx.fillStyle='#ede9ee';
+        ctx.beginPath(); ctx.roundRect(p,y0-size*0.10,w,size*0.16,[br,br,0,0]); ctx.fill();
+
+        // 金幣
+        const cx=size*0.62, cy=size*0.555, cr=size*0.10;
+        ctx.beginPath(); ctx.arc(cx,cy,cr,0,Math.PI*2);
+        ctx.fillStyle='#f0d080'; ctx.fill();
+        ctx.strokeStyle='#d4a800'; ctx.lineWidth=size*0.025; ctx.stroke();
+
+        // $ 符號
+        ctx.fillStyle='#8b6800';
+        ctx.font=`bold ${size*0.13}px serif`;
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText('$', cx, cy+size*0.005);
+
+        return c.toDataURL('image/png');
+      }
+
+      // Apple touch icons
+      [180,152,120,76].forEach(s=>{
+        const l=document.createElement('link');
+        l.rel='apple-touch-icon'; l.sizes=`${s}x${s}`; l.href=makeIcon(s);
+        document.head.appendChild(l);
+      });
+
+      // Favicon
+      const fav=document.createElement('link');
+      fav.rel='icon'; fav.type='image/png'; fav.href=makeIcon(64);
+      document.head.appendChild(fav);
+
+      // Web App Manifest
+      const manifest={
+        name:'Family Wallet', short_name:'家庭錢包',
+        description:'家庭記帳與預算管理',
+        start_url:'./', display:'standalone',
+        background_color:'#e2e8f0', theme_color:'#b1acb3',
+        orientation:'portrait',
+        icons:[
+          {src:makeIcon(192),sizes:'192x192',type:'image/png',purpose:'any maskable'},
+          {src:makeIcon(512),sizes:'512x512',type:'image/png',purpose:'any maskable'}
+        ]
+      };
+      const ml=document.createElement('link');
+      ml.rel='manifest';
+      ml.href=URL.createObjectURL(new Blob([JSON.stringify(manifest)],{type:'application/json'}));
+      document.head.appendChild(ml);
+    })();
+  </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
