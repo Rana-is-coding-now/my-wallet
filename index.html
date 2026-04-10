@@ -256,7 +256,7 @@ const EXPENSE_CATS = [
   { id:'medical', label:'醫療', emoji:'💊', color:'#b89aaa' },
   { id:'fun',     label:'娛樂', emoji:'🎮', color:'#89adb0' },
   { id:'home',    label:'居家', emoji:'🏠', color:'#c4b598' },
-  { id:'drink',   label:'飲品', emoji:'🧋', color:'#a099b8' },
+  { id:'drink',   label:'飲品', emoji:'🥤', color:'#a099b8' },
   { id:'other',   label:'其他', emoji:'📦', color:'#8bab9f' },
 ];
 const INCOME_CATS = [
@@ -274,7 +274,7 @@ const DEFAULT_WALLETS = [
   { id:'w1', name:'現金',   icon:'💵', balance:3000  },
   { id:'w2', name:'銀行卡', icon:'🏦', balance:28000 },
 ];
-const DEFAULT_SETTINGS = { geminiKey:'', budget:30000, theme:'light' };
+const DEFAULT_SETTINGS = { geminiKey:'', budget:30000, theme:'light', catBudgets:{} };
 
 // ─── 共用元件：客製化彈出視窗 ─────────────────────────────────
 function CustomModal({ isOpen, title, text, textRed, onOk, onCancel }) {
@@ -527,6 +527,8 @@ function HomePage({ txns, setTxns, wallets, setWallets, subs, setSubs, settings,
   const [showGroups,setShowGroups]= React.useState(3);
   const [selectedTxn,setSelectedTxn] = React.useState(null);
   const [delTxn, setDelTxn] = React.useState(null);
+  const [undoStack,setUndoStack] = React.useState(null); // {txn, walletSnap}
+  const [undoTimer,setUndoTimer] = React.useState(null);
 
   const pocketBalance = wallets.reduce((s,w)=>s+w.balance,0);
   const activeSub     = subs.filter(s=>s.active).reduce((s,x)=>s+x.amount,0);
@@ -561,10 +563,25 @@ function HomePage({ txns, setTxns, wallets, setWallets, subs, setSubs, settings,
   const handleDeleteConfirm = () => {
     if(!delTxn) return;
     const t = delTxn;
+    const walletSnap = wallets.map(w=>({...w}));
     setTxns(prev=>prev.filter(x=>x.id!==t.id));
     setWallets(prev=>prev.map(w=>w.id===t.walletId ? {...w, balance: isIncome(t) ? w.balance-t.amount : w.balance+t.amount } : w));
     if (t.subId) setSubs(prev=>prev.filter(s=>s.id!==t.subId));
     setDelTxn(null);
+    // 開啟 undo 視窗（5 秒）
+    if(undoTimer) clearTimeout(undoTimer);
+    setUndoStack({txn:t, walletSnap});
+    const tid = setTimeout(()=>setUndoStack(null), 5000);
+    setUndoTimer(tid);
+  };
+
+  const handleUndo = () => {
+    if(!undoStack) return;
+    setTxns(prev=>[undoStack.txn,...prev]);
+    setWallets(undoStack.walletSnap);
+    if(undoStack.txn.subId) setSubs(prev=>[...prev]); // sub 已刪無法還原
+    if(undoTimer) clearTimeout(undoTimer);
+    setUndoStack(null);
   };
 
   const DATE_PRESETS = [
@@ -589,6 +606,14 @@ function HomePage({ txns, setTxns, wallets, setWallets, subs, setSubs, settings,
 
       {over && <div className="warn-banner" style={{marginBottom:16}}><span>🚨</span><span style={{fontSize:14,fontWeight:500}}>本月已超支 {fmtAmt(spent-budget)}</span></div>}
 
+      {/* ── Undo Toast ── */}
+      {undoStack && (
+        <div style={{position:'fixed',bottom:'calc(var(--nav-h)+12px)',left:'50%',transform:'translateX(-50%)',zIndex:500,background:'var(--text)',color:'var(--card-bg)',borderRadius:14,padding:'12px 16px',display:'flex',alignItems:'center',gap:12,boxShadow:'0 4px 20px rgba(0,0,0,0.25)',width:'90%',maxWidth:380,animation:'fadeSlideIn 0.3s ease both'}}>
+          <span style={{fontSize:13,flex:1}}>已刪除「{CAT_MAP[undoStack.txn.category]?.label}」</span>
+          <button onClick={handleUndo} style={{background:'var(--primary)',color:'#020617',border:'none',borderRadius:8,padding:'6px 14px',fontWeight:700,fontSize:13,cursor:'pointer'}}>復原</button>
+        </div>
+      )}
+
       <div className="card" style={{padding:16,marginBottom:12}}>
         <div style={{display:'flex',justifyContent:'space-between',fontSize:13,marginBottom:8}}>
           <span style={{color:'var(--text-muted)'}}>本月預算餘額</span>
@@ -605,6 +630,37 @@ function HomePage({ txns, setTxns, wallets, setWallets, subs, setSubs, settings,
           </div>
         )}
       </div>
+
+      {/* ── 分類預算進度（有設定才顯示）── */}
+      {settings.catBudgets && Object.keys(settings.catBudgets).length>0 && (() => {
+        const cb = settings.catBudgets;
+        const catSpent = {};
+        monthTxns.filter(isExpense).forEach(t=>{ const k=t.category||'other'; catSpent[k]=(catSpent[k]||0)+t.amount; });
+        const cats = EXPENSE_CATS.filter(c=>cb[c.id]>0);
+        if(!cats.length) return null;
+        return (
+          <div className="card" style={{padding:16,marginBottom:12}}>
+            <div className="section-title" style={{marginBottom:10}}>分類預算</div>
+            {cats.map(cat=>{
+              const limit=parseFloat(cb[cat.id])||0;
+              const sp=catSpent[cat.id]||0;
+              const pct2=Math.min(sp/limit*100,100);
+              const isOver=sp>limit;
+              return (
+                <div key={cat.id} style={{marginBottom:10}}>
+                  <div style={{display:'flex',justifyContent:'space-between',fontSize:12,marginBottom:4}}>
+                    <span>{cat.emoji} {cat.label}</span>
+                    <span style={{color:isOver?'var(--danger)':'var(--text-muted)',fontWeight:600}}>{fmtAmt(sp)} / {fmtAmt(limit)}</span>
+                  </div>
+                  <div className="progress-bar">
+                    <div className="progress-fill" style={{width:`${pct2}%`,background:isOver?'var(--danger)':pct2>80?'var(--warning)':cat.color}} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        );
+      })()}
 
       <div style={{marginBottom:14}}>
         <input type="text" placeholder="🔍 搜尋交易…" value={search}
@@ -698,6 +754,8 @@ function AddPage({ wallets, settings, setTxns, setWallets, setPage, editTxn, set
   const [quickCat,setQuickCat]= React.useState(null);
   const [quickAmt,setQuickAmt]= React.useState('');
   const [quickNote,setQuickNote]=React.useState('');
+  const [recurring,setRecurring]=React.useState('none'); // none/daily/weekly/monthly
+  const [recurEnd, setRecurEnd] =React.useState('');
 
   const activeCats = txnType==='income' ? INCOME_CATS : EXPENSE_CATS;
   const cancel = () => { setEditTxn && setEditTxn(null); setPage('home'); };
@@ -715,6 +773,21 @@ function AddPage({ wallets, settings, setTxns, setWallets, setPage, editTxn, set
       applyWalletDelta(walletId, newAmt, txnType, +1);
       setTxns(prev=>prev.map(t=>t.id===editTxn.id ? {...t,amount:newAmt,category:cat,walletId,note:note.trim(),date,type:txnType} : t));
       setEditTxn && setEditTxn(null);
+    } else if (recurring !== 'none') {
+      // 產生重複交易清單
+      const txns = [];
+      let cur = new Date(date);
+      const end = recurEnd ? new Date(recurEnd) : new Date(new Date(date).setFullYear(new Date(date).getFullYear()+1));
+      let count = 0;
+      while (cur <= end && count < 365) {
+        txns.push({id:genId(),amount:newAmt,category:cat,walletId,note:note.trim(),date:cur.toISOString().slice(0,10),type:txnType,recurring});
+        if (recurring==='daily')   cur.setDate(cur.getDate()+1);
+        else if (recurring==='weekly')  cur.setDate(cur.getDate()+7);
+        else cur.setMonth(cur.getMonth()+1);
+        count++;
+      }
+      setTxns(prev=>[...txns,...prev]);
+      txns.forEach(t=>applyWalletDelta(t.walletId, t.amount, t.type, +1));
     } else {
       const txn={id:genId(),amount:newAmt,category:cat,walletId,note:note.trim(),date,type:txnType};
       setTxns(prev=>[txn,...prev]);
@@ -852,9 +925,25 @@ function AddPage({ wallets, settings, setTxns, setWallets, setPage, editTxn, set
               <input type="date" value={date} onChange={e=>setDate(e.target.value)} /></div>
             <div><label style={{fontSize:13,color:'var(--text-muted)',display:'block',marginBottom:6}}>備註（選填）</label>
               <input type="text" placeholder="輸入備註…" value={note} onChange={e=>setNote(e.target.value)} /></div>
+            {!isEdit && (
+              <div>
+                <label style={{fontSize:13,color:'var(--text-muted)',display:'block',marginBottom:6}}>🔁 重複記帳</label>
+                <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:8}}>
+                  {[['none','不重複'],['daily','每天'],['weekly','每週'],['monthly','每月']].map(([v,l])=>(
+                    <button key={v} onClick={()=>setRecurring(v)} style={{padding:'7px 14px',borderRadius:10,border:'none',fontSize:13,fontWeight:600,cursor:'pointer',background:recurring===v?'var(--primary)':'var(--input-bg)',color:recurring===v?'#020617':'var(--text-muted)'}}>{l}</button>
+                  ))}
+                </div>
+                {recurring!=='none'&&(
+                  <div>
+                    <label style={{fontSize:12,color:'var(--text-dim)',display:'block',marginBottom:4}}>重複到（選填，不填則永久）</label>
+                    <input type="date" value={recurEnd} onChange={e=>setRecurEnd(e.target.value)} />
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           <button className={`btn ${txnType==='income'?'btn-success':'btn-primary'}`} style={{width:'100%',marginTop:24}} onClick={submit} disabled={!formValid}>
-            {isEdit?'✅ 儲存修改':'💾 儲存交易'}
+            {isEdit?'✅ 儲存修改': recurring!=='none'?'🔁 儲存重複交易':'💾 儲存交易'}
           </button>
         </>
       )}
@@ -864,13 +953,17 @@ function AddPage({ wallets, settings, setTxns, setWallets, setPage, editTxn, set
 
 // ─── 設定頁 ──────────────────────────────────────────────────
 function SettingsPage({ settings, setSettings }) {
-  const [key,    setKey]    = React.useState(settings.geminiKey||'');
-  const [budget, setBudget] = React.useState(String(settings.budget||30000));
-  const [saved,  setSaved]  = React.useState(false);
+  const [key,       setKey]       = React.useState(settings.geminiKey||'');
+  const [showKey,   setShowKey]   = React.useState(false);
+  const [budget,    setBudget]    = React.useState(String(settings.budget||30000));
+  const [catBudgets,setCatBudgets]= React.useState(settings.catBudgets||{});
+  const [saved,     setSaved]     = React.useState(false);
   const [confirmReset,setConfirmReset] = React.useState(false);
 
+  const maskedKey = key ? key.slice(0,8)+'…'+key.slice(-4) : '';
+
   const save = () => {
-    setSettings({...settings,geminiKey:key.trim(),budget:parseFloat(budget)||30000});
+    setSettings({...settings,geminiKey:key.trim(),budget:parseFloat(budget)||30000,catBudgets});
     setSaved(true); setTimeout(()=>setSaved(false),2000);
   };
   const toggleTheme = () => {
@@ -918,13 +1011,41 @@ function SettingsPage({ settings, setSettings }) {
 
       <div className="section-title">Gemini API Key</div>
       <div className="card" style={{padding:16,marginBottom:20}}>
-        <input type="password" placeholder="AIza…" value={key} onChange={e=>setKey(e.target.value)} style={{marginBottom:12}} />
-        {/* ── 顯示當前模型版本 ── */}
+        {/* 已儲存的 Key 狀態顯示 */}
+        {settings.geminiKey ? (
+          <div style={{background:'rgba(16,185,129,0.1)',border:'1px solid rgba(16,185,129,0.3)',borderRadius:10,padding:'10px 14px',marginBottom:12,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+            <div>
+              <div style={{fontSize:12,color:'var(--accent)',fontWeight:600,marginBottom:2}}>✅ Key 已儲存</div>
+              <div style={{fontSize:13,color:'var(--text-muted)',fontFamily:'monospace'}}>{showKey ? settings.geminiKey : maskedKey}</div>
+            </div>
+            <button className="btn btn-ghost" style={{padding:'4px 10px',fontSize:12}} onClick={()=>setShowKey(v=>!v)}>{showKey?'隱藏':'顯示'}</button>
+          </div>
+        ) : (
+          <div style={{background:'rgba(239,68,68,0.08)',border:'1px solid rgba(239,68,68,0.2)',borderRadius:10,padding:'10px 14px',marginBottom:12}}>
+            <div style={{fontSize:12,color:'var(--danger)',fontWeight:600}}>⚠️ 尚未設定 Key，AI 功能無法使用</div>
+          </div>
+        )}
+        <input type="password" placeholder="貼上新的 API Key (AIza…)" value={key} onChange={e=>setKey(e.target.value)} style={{marginBottom:8}} />
         <div style={{fontSize:12,color:'var(--text-dim)',marginBottom:8,display:'flex',alignItems:'center',gap:6}}>
           <span>🤖</span><span>當前模型：{GEMINI_MODEL}</span>
         </div>
-        <div style={{fontSize:12,color:'var(--text-dim)',marginBottom:16}}>*請填入您的 API Key 以啟用 AI 財務顧問及 AI 記帳功能</div>
+        <div style={{fontSize:12,color:'var(--text-dim)',marginBottom:14}}>免費 Key 至 <a href="https://aistudio.google.com/apikey" target="_blank" style={{color:'var(--accent)'}}>Google AI Studio</a> 申請</div>
         <button className="btn btn-primary" style={{width:'100%'}} onClick={save}>{saved?'✅ 已儲存':'💾 儲存設定'}</button>
+      </div>
+
+      <div className="section-title">分類預算上限</div>
+      <div className="card" style={{padding:16,marginBottom:20}}>
+        <div style={{fontSize:12,color:'var(--text-dim)',marginBottom:14}}>設定後首頁會顯示各分類的花費進度，留空代表不限制</div>
+        <div style={{display:'flex',flexDirection:'column',gap:10}}>
+          {EXPENSE_CATS.map(cat=>(
+            <div key={cat.id} style={{display:'flex',alignItems:'center',gap:12}}>
+              <span style={{fontSize:20,width:28,textAlign:'center'}}>{cat.emoji}</span>
+              <span style={{fontSize:13,fontWeight:600,flex:1,color:'var(--text-muted)'}}>{cat.label}</span>
+              <input type="number" placeholder="不限制" value={catBudgets[cat.id]||''} onChange={e=>setCatBudgets(p=>({...p,[cat.id]:e.target.value?parseFloat(e.target.value):undefined}))} style={{width:120,textAlign:'right',padding:'8px 12px'}} />
+            </div>
+          ))}
+        </div>
+        <button className="btn btn-primary" style={{width:'100%',marginTop:16}} onClick={save}>{saved?'✅ 已儲存':'💾 儲存預算'}</button>
       </div>
 
       <div className="section-title">資料管理</div>
@@ -1131,13 +1252,14 @@ function WalletPage({ txns, wallets, setWallets }) {
 }
 
 // ─── 訂閱管理頁 ──────────────────────────────────────────────
-function SubsPage({ subs, setSubs }) {
+function SubsPage({ subs, setSubs, wallets }) {
   const [editing,setEditing]=React.useState(null);
   const [delId,setDelId]=React.useState(null);
-  const [form,setForm]=React.useState({name:'',icon:'📱',amount:'',billingDay:'1',lastUsed:todayStr(),active:true});
-  const openNew=()=>{setForm({name:'',icon:'📱',amount:'',billingDay:'1',lastUsed:todayStr(),active:true});setEditing('new');};
-  const openEdit=s=>{setForm({...s,amount:String(s.amount),billingDay:String(s.billingDay)});setEditing(s.id);};
-  const save=()=>{ const s={...form,amount:parseFloat(form.amount)||0,billingDay:parseInt(form.billingDay)||1}; if(editing==='new') setSubs(prev=>[...prev,{...s,id:genId()}]); else setSubs(prev=>prev.map(x=>x.id===editing?{...x,...s}:x)); setEditing(null); };
+  const defaultWalletId = wallets[0]?.id||'';
+  const [form,setForm]=React.useState({name:'',icon:'📱',amount:'',billingDay:'1',lastUsed:todayStr(),active:true,walletId:defaultWalletId});
+  const openNew=()=>{setForm({name:'',icon:'📱',amount:'',billingDay:'1',lastUsed:todayStr(),active:true,walletId:defaultWalletId});setEditing('new');};
+  const openEdit=s=>{setForm({...s,amount:String(s.amount),billingDay:String(s.billingDay),walletId:s.walletId||defaultWalletId});setEditing(s.id);};
+  const save=()=>{ const s={...form,amount:parseFloat(form.amount)||0,billingDay:parseInt(form.billingDay)||1,walletId:form.walletId||defaultWalletId}; if(editing==='new') setSubs(prev=>[...prev,{...s,id:genId()}]); else setSubs(prev=>prev.map(x=>x.id===editing?{...x,...s}:x)); setEditing(null); };
   const toggle=id=>setSubs(prev=>prev.map(s=>s.id===id?{...s,active:!s.active}:s));
   const daysUntil=bd=>{ const now=new Date(); let next=new Date(now.getFullYear(),now.getMonth(),bd); if(next<=now) next=new Date(now.getFullYear(),now.getMonth()+1,bd); return Math.ceil((next-now)/86400000); };
   const isZombie=s=>s.lastUsed&&Math.floor((Date.now()-new Date(s.lastUsed))/86400000)>60;
@@ -1171,6 +1293,10 @@ function SubsPage({ subs, setSubs }) {
               <div><label style={{fontSize:13,color:'var(--text-muted)',display:'block',marginBottom:6}}>扣款日（號）</label><input type="number" min="1" max="28" value={form.billingDay} onChange={e=>setForm(p=>({...p,billingDay:e.target.value}))} /></div>
             </div>
             <div><label style={{fontSize:13,color:'var(--text-muted)',display:'block',marginBottom:6}}>實際最後使用日（供殭屍訂閱偵測）</label><input type="date" value={form.lastUsed} onChange={e=>setForm(p=>({...p,lastUsed:e.target.value}))} /></div>
+            <div><label style={{fontSize:13,color:'var(--text-muted)',display:'block',marginBottom:6}}>扣款錢包</label>
+              <select value={form.walletId} onChange={e=>setForm(p=>({...p,walletId:e.target.value}))}>
+                {wallets.map(w=><option key={w.id} value={w.id}>{w.icon} {w.name} ({fmtAmt(w.balance)})</option>)}
+              </select></div>
           </div>
         </div>
       )}
@@ -1189,7 +1315,7 @@ function SubsPage({ subs, setSubs }) {
                   {zombie&&s.active&&<span className="badge" style={{background:'rgba(239,68,68,0.15)',color:'var(--danger)',fontSize:10}}>🧟 殭屍</span>}
                   {!s.active&&<span className="badge" style={{background:'rgba(148,163,184,0.1)',color:'var(--text-dim)',fontSize:10}}>已取消</span>}
                 </div>
-                <div style={{fontSize:12,color:'var(--text-dim)',marginTop:2}}>{s.active?`${dl} 天後自動扣款`:'已暫停'} · {fmtAmt(s.amount)}/月</div>
+                <div style={{fontSize:12,color:'var(--text-dim)',marginTop:2}}>{s.active?`${dl} 天後自動扣款`:'已暫停'} · {fmtAmt(s.amount)}/月 · {wallets.find(w=>w.id===(s.walletId||wallets[0]?.id))?.icon}{wallets.find(w=>w.id===(s.walletId||wallets[0]?.id))?.name||'預設錢包'}</div>
               </div>
               <div style={{display:'flex',gap:6}}>
                 <button className="btn btn-ghost" style={{padding:'6px 10px',fontSize:13}} onClick={()=>toggle(s.id)}>{s.active?'⏸':'▶️'}</button>
@@ -1385,11 +1511,13 @@ function App() {
       let updatedWallets = [...wallets];
       const finalSubs = newSubs.map(s => {
         if (s._needsBilling) {
-          const wId = updatedWallets[0]?.id;
-          if (wId) {
+          const wId = s.walletId || updatedWallets[0]?.id;
+          const wIdx = updatedWallets.findIndex(w=>w.id===wId);
+          const useIdx = wIdx>=0 ? wIdx : 0;
+          if (updatedWallets[useIdx]) {
             const amt = parseFloat(s.amount) || 0;
-            updatedTxns.unshift({ id:genId(), amount:amt, category:'other', walletId:wId, note:`訂閱扣款：${s.name}`, date:todayStr(), type:'expense', subId:s.id });
-            updatedWallets[0].balance -= amt;
+            updatedTxns.unshift({ id:genId(), amount:amt, category:'other', walletId:updatedWallets[useIdx].id, note:`訂閱扣款：${s.name}`, date:todayStr(), type:'expense', subId:s.id });
+            updatedWallets[useIdx].balance -= amt;
           }
           delete s._needsBilling;
           s.lastBilledMonth = currentYearMonth;
@@ -1407,7 +1535,7 @@ function App() {
     stats:    <StatsPage    txns={txns} />,
     wallets:  <WalletPage   txns={txns} wallets={wallets} setWallets={setWallets} />,
     add:      <AddPage      wallets={wallets} settings={settings} setTxns={setTxns} setWallets={setWallets} setPage={setPage} editTxn={editTxn} setEditTxn={setEditTxn} />,
-    subs:     <SubsPage     subs={subs} setSubs={setSubs} />,
+    subs:     <SubsPage     subs={subs} setSubs={setSubs} wallets={wallets} />,
     ai:       <AIPage       txns={txns} settings={settings} />,
     settings: <SettingsPage settings={settings} setSettings={setSettings} />,
   };
