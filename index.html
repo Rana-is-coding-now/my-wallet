@@ -596,7 +596,8 @@ function AddPage({ wallets, settings, setTxns, setWallets, setPage, editTxn, set
     try {
       const catIds = activeCats.map(c=>c.id).join('/');
       const res = await fetchWithBackoff(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5
+        -flash:generateContent?key=${key}`,
         { method:'POST', headers:{'Content-Type':'application/json'},
           body:JSON.stringify({ contents:[{parts:[{text:aiText}]}], systemInstruction:{parts:[{text:`你是記帳助手。回傳純 JSON（不加 Markdown）：{"category":"id（${catIds}）","amount":數字,"note":"備註","date":"YYYY-MM-DD"}。今天：${todayStr()}。`}]} }) }
       );
